@@ -34,7 +34,7 @@
                 wireframe: true
             });
             const loader = new THREE.TextureLoader();
-            const texture = loader.load ('http://192.168.4.116:8000/texture.png')
+            const texture = loader.load ('texture.png');
 
             let material1 = new THREE.MeshStandardMaterial({map: texture});
             let geometry1 = new THREE.BoxBufferGeometry();
