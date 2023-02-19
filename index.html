@@ -4,21 +4,42 @@
     <head>
         <meta charset="utf-8">
         <title>webgl test</title>
+        <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://unpkg.com/three/build/three.module.js",
+                    "three/": "https://unpkg.com/three@0.149.0/"
+                }
+            }
+        </script>
     </head>
 
     <body>
+        
+
+        <!-- My Code -->
         <script type="module">
-            import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.117.1/build/three.module.js';
-            import {OBJLoader} from "https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/OBJLoader.js";
-            import {TextureLoader} from "https://cdn.jsdelivr.net/npm/three@0.117.1/src/loaders/TextureLoader.js";
+            import * as THREE from 'three';
             
-            import {BufferGeometryUtils} from "https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/utils/BufferGeometryUtils.js";
-            import {MTLLoader} from "https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/loaders/MTLLoader.js";
-            import {EffectComposer} from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/postprocessing/EffectComposer.js';
-            import {RenderPass} from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/postprocessing/RenderPass.js';
-            import {GlitchPass} from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/postprocessing/GlitchPass.js';
-            import {UnrealBloomPass} from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/postprocessing/UnrealBloomPass.js';
-            const loafmat = "https://cdn.jsdelivr.net/gh/Alexanderssssss/nerep@main/longloaf1.mtl";
+            import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
+
+            import { TextureLoader } from "three/src/loaders/TextureLoader.js";
+            import * as BufferGeometryUtils from "three/examples/jsm/utils/BufferGeometryUtils.js";
+            import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
+            import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+            import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+            import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+            /*import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js';
+            import {OBJLoader} from "https://cdn.jsdelivr.net/npm/three@0.149.0/examples/jsm/loaders/OBJLoader.js";
+            import {TextureLoader} from "https://cdn.jsdelivr.net/npm/three@0.149.0/src/loaders/TextureLoader.js";
+            
+            import {BufferGeometryUtils} from "https://cdn.jsdelivr.net/npm/three@0.149.0/examples/jsm/utils/BufferGeometryUtils.js";
+            import {MTLLoader} from "https://cdn.jsdelivr.net/npm/three@0.149.0/examples/jsm/loaders/MTLLoader.js";
+            import {EffectComposer} from 'https://cdn.jsdelivr.net/npm/three@0.149.0/examples/jsm/postprocessing/EffectComposer.js';
+            import {RenderPass} from 'https://cdn.jsdelivr.net/npm/three@0.149.0/examples/jsm/postprocessing/RenderPass.js';
+            import {UnrealBloomPass} from 'https://cdn.jsdelivr.net/npm/three@0.149.0/examples/jsm/postprocessing/UnrealBloomPass.js';*/
+            //const loafmat = "https://cdn.jsdelivr.net/gh/Alexanderssssss/nerep@main/longloaf1.mtl";
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.y = 3;
@@ -34,30 +55,28 @@
                 wireframe: true
             });
             const loader = new THREE.TextureLoader();
-            const texture = loader.load ('texture.png');
+            const texture = loader.load ('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/texture.png')
+            texture.minFilter = THREE.NearestFilter;
+            texture.magFilter = THREE.NearestFilter;
 
             let material1 = new THREE.MeshStandardMaterial({map: texture});
-            let geometry1 = new THREE.BoxBufferGeometry();
-            let geometry2 = new THREE.BoxBufferGeometry();
+            let geometry1 = new THREE.BoxGeometry();
+            let geometry2 = new THREE.BoxGeometry();
             geometry1.scale(5,1,5)
             let mesh1 = new THREE.Mesh(geometry1, material1);
             geometry2.translate(0,1,0);
             
             let mesh2 = new THREE.Mesh(geometry2, material1);
             mesh2.position.y += 1;
-            mesh1.castShadow = true;
-            mesh2.castShadow = true;
-            mesh1.receiveShadow = true;
             mesh2.receiveShadow = true;
 
             let twogeometries = BufferGeometryUtils.mergeBufferGeometries([geometry1,geometry2]);
             mesh2 = new THREE.Mesh(twogeometries,material1);
             mesh2.receiveShadow = true;
             mesh2.castShadow = true;
-
+            scene.add(mesh2);
             //scene.add(mesh1);
             //scene.add(mesh2);
-            scene.add(mesh2);
             //scene.add(new THREE.Mesh(new THREE.CubeGeometry(1,1,1), material))
 
             const color = 0xFFFFFF;
@@ -103,7 +122,6 @@
 
             function animate() {
                 requestAnimationFrame(animate);
-                //mesh.rotation.x += 0.05;
                 mesh2.rotation.y += 0.01;
                 composer.render();
             };
