@@ -79,7 +79,6 @@
                 directionalLight.castShadow = true;
                 directionalLight.target = new THREE.Object3D();
                 scene.add(directionalLight);
-                
             }
             function loadMeshes(){
                 let planegeometry = new THREE.PlaneGeometry(); 
@@ -97,20 +96,27 @@
                 requestAnimationFrame(animate);
                 composer.render();
             };
-    /* ************
-            let geometry1 = new THREE.BoxGeometry();
-            let geometry2 = new THREE.BoxGeometry();
-            geometry1.scale(5,1,5)
-            let mesh1 = new THREE.Mesh(geometry1, material1);
-            geometry2.translate(0,1,0);
-            let mesh2 = new THREE.Mesh(geometry2, material1);
-            mesh2.position.y += 1;
-            mesh2.receiveShadow = true;
-            let twogeometries = BufferGeometryUtils.mergeBufferGeometries([geometry1,geometry2]);
-            mesh2 = new THREE.Mesh(twogeometries,material1);
-            mesh2.receiveShadow = true;
-            mesh2.castShadow = true;
-            scene.add(mesh2);           ********** */ 
+
+        </script>
+        <script>
+            /*let Height = 4;
+            let Width = 4;
+            let array = [];
+            for (let i = 0; i < Height; i++) {
+                array[i] = [];
+                for (let j = 0; j < Width; j++) {
+                    array[i][j] = 1;
+                }
+            }*/
+        /*
+            for(let i = 0; i < Height; i++){
+                for(let j = 0; j < Width; j++){
+                    document.write(array[i][j]);
+                }
+                document.write("<br>");
+            }
+            */
+            //document.writeln(array.toString());
         </script>
     </body>
 
