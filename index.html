@@ -35,6 +35,7 @@
             initLoaders();
             initScene();
             loadMeshes();
+            
             animate();
             function initLoaders(){
                 textureLoader = new THREE.TextureLoader();
@@ -97,6 +98,34 @@
                 requestAnimationFrame(animate);
                 composer.render();
             };
+
+
+            function MapRange(pixelArray,layersNumber,maxNumber = 255){
+                return pixelArray.map(x => x.map(y => y.map()));
+            }
+            function LoadImageToArray(url){
+                let array = []
+                imageLoader.load(
+                url,
+                function ( image ) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = image.width;
+                    canvas.height = image.height; 
+                    document.body.appendChild(canvas);
+                    const context = canvas.getContext('2d',{willReadFrequently: true});
+                    context.drawImage( image, 0, 0 );
+                    for (let i = 0; i < image.height; i++) {
+                        array[i] = [];
+                        for (let j = 0; j < image.width; j++) {
+                            array[i][j] = context.getImageData(i, j, 1, 1);;
+                        }
+                    }
+                },
+                undefined,
+                function () {console.error( 'An error happened.' );}
+                );
+                return array;
+            }
     /* ************
             let geometry1 = new THREE.BoxGeometry();
             let geometry2 = new THREE.BoxGeometry();
