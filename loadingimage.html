@@ -30,10 +30,10 @@
 
             var imageLoader = new ImageLoader();
             let data = [];
-            data = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/texture.png');
+            data = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
             console.log(data.length);
 
-            console.log(MapRange(data,4));
+            console.log(MapRange(data,6));
             function MapRange(array,layersNumber,maxNumber = 255){
                 let coefficient = layersNumber/maxNumber;
                 let newarray = [];
@@ -44,30 +44,28 @@
                     }
                 }
                 return newarray;
-                    
             }
             async function LoadImageToArray(url,channel=0){
                 let array = []
-                imageLoader.load(
-                url,
-                function ( image ) {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = image.width;
-                    canvas.height = image.height; 
-                    document.body.appendChild(canvas);
-                    const context = canvas.getContext('2d',{willReadFrequently: true});
-                    context.drawImage( image, 0, 0 );
-                    for (let i = 0; i < image.height; i++) {
-                        array[i] = [];
-                        for (let j = 0; j < image.width; j++) {
-                            array[i][j] = context.getImageData(i, j, 1, 1).data[channel];
+                let promise = new Promise(function(resolve, reject) {
+                    imageLoader.load(url,
+                    function ( image ) {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = image.width;
+                        canvas.height = image.height; 
+                        document.body.appendChild(canvas);
+                        const context = canvas.getContext('2d',{willReadFrequently: true});
+                        context.drawImage( image, 0, 0 );
+                        for (let i = 0; i < image.height; i++) {
+                            array[i] = [];
+                            for (let j = 0; j < image.width; j++) {
+                                array[i][j] = context.getImageData(i, j, 1, 1).data[channel];
+                            }
                         }
-                    }
-                },
-                undefined,
-                function () {console.error( 'An error happened.' );}
-                );
-                while(!array.length) await delay(100);
+                        resolve();
+                    },undefined,function () {console.error( 'An error happened.' );});
+                });
+                await promise;
                 return array;
             }
 
