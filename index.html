@@ -31,15 +31,137 @@
             let scene, camera, renderer, composer;
             let blocksTexture, modelsTexture, waterTexture; 
             let blocksMaterial, modelsMaterial, waterMaterial;
-            let landscapeMesh; 
-            let ambientLight, directionalLight;
+            let currentLevel, landscapeMesh; 
+            let LevelSize = 32;
+            let ambientLight, directionalLight, lightTarget;
+            
+            currentLevel = 0;
             initLoaders();
-            initScene();
-            let data = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
-            data = MapRange(data,7);
-            loadMeshes();
-           
+            
+            await loadLevel(1);
             animate();
+            
+            async function loadLevel(level){
+                initScene();
+                let data = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
+                data = MapRange(data,12);
+
+                loadMeshes();
+                function initScene(){
+                    /*Camera*/
+                    scene = new THREE.Scene();
+                    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+                    camera.position.y = 10;
+                    camera.position.z = 20;
+                    camera.rotation.x = 5.6;
+                    /*Rendering*/
+                    renderer = new THREE.WebGLRenderer({antialias:true});
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    renderer.shadowMap.enabled = true;
+                    document.body.appendChild(renderer.domElement);
+                    composer = new EffectComposer(renderer);
+                    composer.addPass(new RenderPass(scene, camera));
+                    let bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+                    bloomPass.renderToScreen = true;
+                    bloomPass.threshold = 0;
+                    bloomPass.strength = 0.2;
+                    bloomPass.radius = 0;
+                    composer.addPass(bloomPass);
+                    /*Materials*/
+                    blocksTexture = textureLoader.load('https://raw.githubusercontent.com/ShiverBeave-/MyExperiments/main/texture.png');
+                    blocksTexture.minFilter = THREE.NearestFilter;
+                    blocksTexture.magFilter = THREE.NearestFilter;
+                    blocksMaterial = new THREE.MeshStandardMaterial({map: blocksTexture});
+                    /*Lighting*/
+                    const color = 0xFFFFFF;
+                    const intensity = 0.4;
+                    ambientLight = new THREE.AmbientLight(color, intensity);
+                    scene.add(ambientLight);
+                    directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                    directionalLight.position.x = 20;
+                    directionalLight.position.y = 20;
+                    directionalLight.position.z = -20;
+                    
+                    directionalLight.castShadow = true;
+                    directionalLight.shadow.mapSize.width = 1024*1; // default
+                    directionalLight.shadow.mapSize.height = 1024*1; // default
+                    directionalLight.shadow.camera.near = 0.5; // default
+                    directionalLight.shadow.camera.far = 128; // default
+                    console.log(directionalLight.shadow.camera);
+                    let lightradius = 15; 
+                    directionalLight.shadow.camera.right = lightradius; 
+                    directionalLight.shadow.camera.top = lightradius; 
+                    directionalLight.shadow.camera.bottom = -lightradius;
+                    directionalLight.shadow.camera.left = -lightradius;
+                    directionalLight.target = new THREE.Object3D();
+                    scene.add(directionalLight.target);
+                    scene.add(directionalLight);
+                }
+                function loadMeshes(){
+                    let planegeometry = new THREE.PlaneGeometry(); 
+                    const uvAttribute = planegeometry.getAttribute("uv");
+                    const uvArray = uvAttribute.array;
+                    /*uvArray[0] = 0;uvArray[1] = 0.5;
+                    uvArray[2] = 0.5;uvArray[3] = 0.5;
+                    uvArray[4] = 0;uvArray[5] = 0;
+                    uvArray[6] = 0.5;uvArray[7] = 0;*/
+                    //uvAttribute.needsUpdate = true;
+                    plane = new THREE.Mesh(planegeometry, blocksMaterial);
+                    plane.position.x = directionalLight.position.x;
+                    plane.position.y = directionalLight.position.y;
+                    plane.position.z = directionalLight.position.z;
+                    scene.add(plane);
+                    
+                    let stmat = new THREE.MeshStandardMaterial({color: 0x009900}); 
+                    for (let i = 0; i < LevelSize; i++) {
+                        for (let j = 0; j < LevelSize; j++) {
+                            let cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), stmat);
+                            cube.position.x = i;
+                            cube.position.z = j;
+                            cube.position.y = data[i][j];
+                            cube.receiveShadow = true;
+                            cube.castShadow = true;
+                            scene.add(cube) ;
+                        }
+                    }
+                }
+                function MapRange(array,layersNumber,maxNumber = 255){
+                    let coefficient = layersNumber/maxNumber;
+                    let newarray = [];
+                    for (let i = 0; i < array.length; i++) {
+                        newarray[i] = [];
+                        for (let j = 0; j < array[i].length; j++) {
+                            newarray[i][j] = Math.round(array[i][j]*coefficient);
+                        }
+                    }
+                    return newarray;
+                }
+                //channel r - 0   g - 1   b - 2  a  - 3
+                async function LoadImageToArray(url,channel=0){
+                    let array = []
+                    let promise = new Promise(function(resolve, reject) {
+                        imageLoader.load(url,
+                        function ( image ) {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = image.width;
+                            canvas.height = image.height; 
+                            const context = canvas.getContext('2d',{willReadFrequently: true});
+                            context.drawImage( image, 0, 0 );
+                            for (let i = 0; i < image.height; i++) {
+                                array[i] = [];
+                                for (let j = 0; j < image.width; j++) {
+                                    array[i][j] = context.getImageData(i, j, 1, 1).data[channel];
+                                }
+                            }
+                            resolve();
+                        },undefined,function () {console.error( 'An error happened.' );});
+                    });
+                    await promise;
+                    return array;
+                }
+            }
+
+            var plane;
             var xSpeed = 0.3;
             var ySpeed = 0.3;
             var zSpeed = 0.3;
@@ -62,16 +184,22 @@
                 }
                 if (key == "E") {
                     directionalLight.position.y += ySpeed;
+                    directionalLight.target.position.y += ySpeed;
                 } else if (key == "Q") {
                     directionalLight.position.y -= ySpeed;
+                    directionalLight.target.position.y -= ySpeed;
                 } else if (key == "A") {
                     directionalLight.position.x -= xSpeed;
+                    directionalLight.target.position.x -= xSpeed;
                 } else if (key == "D") {
                     directionalLight.position.x += xSpeed;
+                    directionalLight.target.position.x += xSpeed;
                 } else if (key == "W") {
                     directionalLight.position.z -= zSpeed;
+                    directionalLight.target.position.z -= zSpeed;
                 } else if (key == "S") {
                     directionalLight.position.z += zSpeed;
+                    directionalLight.target.position.z += zSpeed;
                 }
                 plane.position.x = directionalLight.position.x;
                 plane.position.y = directionalLight.position.y;
@@ -83,121 +211,12 @@
                 mtlLoader = new MTLLoader();
                 imageLoader = new ImageLoader();
             }
-            function initScene(){
-                 /*Camera*/
-                scene = new THREE.Scene();
-                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-                camera.position.y = 10;
-                camera.position.z = 20;
-                camera.rotation.x = 50;
-                 /*Rendering*/
-                renderer = new THREE.WebGLRenderer({antialias:true});
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.shadowMap.enabled = true;
-                document.body.appendChild(renderer.domElement);
-                composer = new EffectComposer(renderer);
-                composer.addPass(new RenderPass(scene, camera));
-                let bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-                bloomPass.renderToScreen = true;
-                bloomPass.threshold = 0;
-                bloomPass.strength = 0.2;
-                bloomPass.radius = 0;
-                composer.addPass(bloomPass);
-                 /*Materials*/
-                blocksTexture = textureLoader.load ('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/texture.png')
-                blocksTexture.minFilter = THREE.NearestFilter;
-                blocksTexture.magFilter = THREE.NearestFilter;
-                blocksMaterial = new THREE.MeshStandardMaterial({map: blocksTexture});
-                 /*Lighting*/
-                const color = 0xFFFFFF;
-                const intensity = 0.4;
-                ambientLight = new THREE.AmbientLight(color, intensity);
-                scene.add(ambientLight);
-                directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-                directionalLight.position.x = 20;
-                directionalLight.position.y = 20;
-                directionalLight.position.z = -20;
-                directionalLight.castShadow = true;
-                directionalLight.shadow.mapSize.width = 2048; // default
-                directionalLight.shadow.mapSize.height = 2048; // default
-                directionalLight.shadow.camera.near = 0.5; // default
-                directionalLight.shadow.camera.far = 512; // default
-                console.log(directionalLight.shadow.camera);
-                directionalLight.shadow.camera.right = 30; 
-                directionalLight.shadow.camera.top = 30; 
-                directionalLight.shadow.camera.bottom = -30;
-                directionalLight.shadow.camera.left = -30;
-                scene.add(directionalLight);
-                
-            }
-            var plane;
-            function loadMeshes(){
-                let planegeometry = new THREE.PlaneGeometry(); 
-                const uvAttribute = planegeometry.getAttribute("uv");
-                const uvArray = uvAttribute.array;
-                /*uvArray[0] = 0;uvArray[1] = 0.5;
-                uvArray[2] = 0.5;uvArray[3] = 0.5;
-                uvArray[4] = 0;uvArray[5] = 0;
-                uvArray[6] = 0.5;uvArray[7] = 0;*/
-                //uvAttribute.needsUpdate = true;
-                plane = new THREE.Mesh(planegeometry, blocksMaterial);
-                plane.position.x = directionalLight.position.x;
-                plane.position.y = directionalLight.position.y;
-                plane.position.z = directionalLight.position.z;
-                scene.add(plane);
-                
-                let stmat = new THREE.MeshStandardMaterial({color: 0x009900}); 
-                for (let i = 0; i < 32; i++) {
-                    for (let j = 0; j < 32; j++) {
-                        let cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), stmat);
-                        cube.position.x = i-10;
-                        cube.position.z = j-10;
-                        cube.position.y = data[i][j];
-                        cube.receiveShadow = true;
-                        cube.castShadow = true;
-                        scene.add(cube) ;
-                    }
-                }
-            }
+            
             function animate() {
-                
                 requestAnimationFrame(animate);
                 composer.render();
-                
             };
-            function MapRange(array,layersNumber,maxNumber = 255){
-                let coefficient = layersNumber/maxNumber;
-                let newarray = [];
-                for (let i = 0; i < array.length; i++) {
-                    newarray[i] = [];
-                    for (let j = 0; j < array[i].length; j++) {
-                        newarray[i][j] = Math.round(array[i][j]*coefficient);
-                    }
-                }
-                return newarray;
-            }
-            async function LoadImageToArray(url,channel=0){
-                let array = []
-                let promise = new Promise(function(resolve, reject) {
-                    imageLoader.load(url,
-                    function ( image ) {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = image.width;
-                        canvas.height = image.height; 
-                        const context = canvas.getContext('2d',{willReadFrequently: true});
-                        context.drawImage( image, 0, 0 );
-                        for (let i = 0; i < image.height; i++) {
-                            array[i] = [];
-                            for (let j = 0; j < image.width; j++) {
-                                array[i][j] = context.getImageData(i, j, 1, 1).data[channel];
-                            }
-                        }
-                        resolve();
-                    },undefined,function () {console.error( 'An error happened.' );});
-                });
-                await promise;
-                return array;
-            }
+            
             
     /* ************
             let geometry1 = new THREE.BoxGeometry();
