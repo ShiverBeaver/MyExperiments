@@ -126,7 +126,7 @@
                     bloomPass.radius = 0;
                     composer.addPass(bloomPass);
                     /*Materials*/
-                    blocksTexture = textureLoader.load('https://raw.githubusercontent.com/ShiverBeave-/MyExperiments/main/texture.png');
+                    blocksTexture = textureLoader.load('https://raw.githubusercontent.com/ShiverBeave-/MyExperiments/main/textures/texture.png');
                     blocksTexture.minFilter = THREE.NearestFilter;
                     blocksTexture.magFilter = THREE.NearestFilter;
                     blocksMaterial = new THREE.MeshStandardMaterial({map: blocksTexture});
@@ -172,8 +172,8 @@
                     plane.position.y = directionalLight.position.y;
                     plane.position.z = directionalLight.position.z;
                     scene.add(plane);
-                    let testgrassmat = new THREE.MeshStandardMaterial({color: 0x009900}); 
-                    let testdirtmat = new THREE.MeshStandardMaterial({color: 0x964B00}); 
+                    let testgrassmat = new THREE.MeshStandardMaterial({color: 0x009900, wireframe: false}); 
+                    let testdirtmat = new THREE.MeshStandardMaterial({color: 0x964B00, wireframe: false}); 
                     for (let i = 0; i < LevelSize; i++) {
                         for (let j = 0; j < LevelSize; j++) {
                             for (let z = 0; z < 100; z++){
@@ -197,6 +197,7 @@
                             
                         }
                     }
+                    console.info(new Blob([JSON.stringify(map)]).size);
                 }
                 function MapRange(array,layersNumber,maxNumber = 255){
                     let coefficient = layersNumber/maxNumber;
