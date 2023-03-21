@@ -32,9 +32,16 @@
             let blocksTexture, modelsTexture, waterTexture; 
             let blocksMaterial, modelsMaterial, waterMaterial;
             let currentLevel, landscapeMesh; 
-            let LevelSize = 32;
+            let LevelSize = 64;
             let ambientLight, directionalLight, lightTarget;
-            
+            function createEnum(values) {
+                const enumObject = {};
+                for (const val of values) {
+                    enumObject[val] = val;
+                }
+                return Object.freeze(enumObject);
+            }
+            const Block = createEnum(['Air','Grass', 'Dirt']);
             currentLevel = 0;
             initLoaders();
             
@@ -43,8 +50,57 @@
             
             async function loadLevel(level){
                 initScene();
-                let data = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
-                data = MapRange(data,12);
+                let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
+                noise = MapRange(noise,getRandomInt(5,7));
+                let maxOffset =  noise[0].length - LevelSize;
+                let OffsetX = getRandomInt(0,maxOffset);
+                let OffsetZ = getRandomInt(0,maxOffset);
+                let levelHeightNoise =  [];
+                for (let i = 0; i < LevelSize; i++) {
+                    levelHeightNoise[i] = [];
+                    for (let j = 0; j < LevelSize; j++) {
+                        levelHeightNoise[i][j] = noise[i+OffsetX][j+OffsetZ];
+                    }
+                }
+                let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel.png');
+                template = MapRange(template,getRandomInt(6,9));
+                maxOffset =  template[0].length - LevelSize;
+                OffsetX = getRandomInt(0,maxOffset);
+                OffsetZ = getRandomInt(0,maxOffset);
+                let levelHeightTemplate =  [];
+                for (let i = 0; i < LevelSize; i++) {
+                    levelHeightTemplate[i] = [];
+                    for (let j = 0; j < LevelSize; j++) {
+                        levelHeightTemplate[i][j] = template[i+OffsetX][j+OffsetZ];
+                    }
+                }
+                let HeightMap =  [];
+                for (let i = 0; i < LevelSize; i++) {
+                    HeightMap[i] = [];
+                    for (let j = 0; j < LevelSize; j++) {
+                        HeightMap[i][j] = levelHeightTemplate[i][j]+levelHeightNoise[i][j];
+                    }
+                }
+                
+                let map =  [];
+                for (let i = 0; i < LevelSize; i++) {
+                    map[i] = [];
+                    for (let j = 0; j < LevelSize; j++) {
+                        map[i][j] = []
+                        for(let z = 0;z < 100; z++){
+                            map[i][j][z] = Block.Air;
+                        }
+                    }
+                }
+                for(let i = 0; i < LevelSize; i++){
+                    for(let j = 0; j < LevelSize; j++){
+                        for(let z = 0; z < HeightMap[i][j]; z++){
+                            map[i][j][z] = Block.Dirt;
+                        }
+                        map[i][j][HeightMap[i][j]]=Block.Grass; 
+                    }
+                }
+                console.log(map);
 
                 loadMeshes();
                 function initScene(){
@@ -53,6 +109,8 @@
                     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
                     camera.position.y = 10;
                     camera.position.z = 20;
+                    camera.position.x = 10.6;
+
                     camera.rotation.x = 5.6;
                     /*Rendering*/
                     renderer = new THREE.WebGLRenderer({antialias:true});
@@ -88,14 +146,17 @@
                     directionalLight.shadow.camera.near = 0.5; // default
                     directionalLight.shadow.camera.far = 128; // default
                     console.log(directionalLight.shadow.camera);
-                    let lightradius = 15; 
+                    let lightradius = 30; 
                     directionalLight.shadow.camera.right = lightradius; 
                     directionalLight.shadow.camera.top = lightradius; 
                     directionalLight.shadow.camera.bottom = -lightradius;
                     directionalLight.shadow.camera.left = -lightradius;
                     directionalLight.target = new THREE.Object3D();
+                    
                     scene.add(directionalLight.target);
                     scene.add(directionalLight);
+                    directionalLight.position.x += 10;
+                    directionalLight.target.position.x += 10;
                 }
                 function loadMeshes(){
                     let planegeometry = new THREE.PlaneGeometry(); 
@@ -111,17 +172,29 @@
                     plane.position.y = directionalLight.position.y;
                     plane.position.z = directionalLight.position.z;
                     scene.add(plane);
-                    
-                    let stmat = new THREE.MeshStandardMaterial({color: 0x009900}); 
+                    let testgrassmat = new THREE.MeshStandardMaterial({color: 0x009900}); 
+                    let testdirtmat = new THREE.MeshStandardMaterial({color: 0x964B00}); 
                     for (let i = 0; i < LevelSize; i++) {
                         for (let j = 0; j < LevelSize; j++) {
-                            let cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), stmat);
-                            cube.position.x = i;
-                            cube.position.z = j;
-                            cube.position.y = data[i][j];
-                            cube.receiveShadow = true;
-                            cube.castShadow = true;
-                            scene.add(cube) ;
+                            for (let z = 0; z < 100; z++){
+                                let cube;
+                                if(map[i][j][z] == Block.Dirt){
+                                    cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), testdirtmat)
+                                }
+                                else if(map[i][j][z] == Block.Grass){
+                                    cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), testgrassmat)
+                                }
+                                else{
+                                    continue;
+                                }
+                                cube.position.x = i;
+                                cube.position.z = j;
+                                cube.position.y = z;
+                                cube.receiveShadow = true;
+                                cube.castShadow = true;
+                                scene.add(cube) ;
+                            }
+                            
                         }
                     }
                 }
@@ -166,6 +239,8 @@
             var ySpeed = 0.3;
             var zSpeed = 0.3;
             document.addEventListener("keydown", onDocumentKeyDown, false);
+            
+
             function onDocumentKeyDown(event) {
                 var key = event.key;
                 console.log(key);
@@ -211,11 +286,15 @@
                 mtlLoader = new MTLLoader();
                 imageLoader = new ImageLoader();
             }
-            
+            function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
+            }
             function animate() {
                 requestAnimationFrame(animate);
                 composer.render();
-            };
+            }
             
             
     /* ************
