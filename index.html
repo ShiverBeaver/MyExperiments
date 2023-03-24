@@ -53,7 +53,7 @@
             async function loadLevel(level){
                 initScene();
                 let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
-                noise = MapRange(noise,getRandomInt(5,7));
+                noise = MapRange(noise,getRandomInt(6,8));
                 let maxOffset =  noise[0].length - LevelSize;
                 let OffsetX = getRandomInt(0,maxOffset);
                 let OffsetZ = getRandomInt(0,maxOffset);
@@ -65,7 +65,7 @@
                     }
                 }
                 let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel.png');
-                template = MapRange(template,getRandomInt(6,9));
+                template = MapRange(template,getRandomInt(7,11));
                 maxOffset =  template[0].length - LevelSize;
                 OffsetX = getRandomInt(0,maxOffset);
                 OffsetZ = getRandomInt(0,maxOffset);
@@ -112,8 +112,7 @@
                     camera.position.y = 10;
                     camera.position.z = 20;
                     camera.position.x = 10.6;
-
-                    camera.rotation.x = 5.6;
+                    camera.rotation.x = -Math.PI/4;
                     /*Rendering*/
                     renderer = new THREE.WebGLRenderer({antialias:true});
                     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -131,7 +130,7 @@
                     blocksTexture = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/texture.png');
                     blocksTexture.minFilter = THREE.NearestFilter;
                     blocksTexture.magFilter = THREE.NearestFilter;
-                    blocksMaterial = new THREE.MeshStandardMaterial({map: blocksTexture});
+                    blocksMaterial = new THREE.MeshStandardMaterial({map: blocksTexture/*, wireframe:true, color: 0xAAAAAAA*/});
                     /*Lighting*/
                     const color = 0xFFFFFF;
                     const intensity = 0.2;
@@ -178,6 +177,11 @@
                     let testgrassmat = new THREE.MeshStandardMaterial({color: 0x009900, wireframe: true}); 
                     let testdirtmat = new THREE.MeshStandardMaterial({color: 0x964B00, wireframe: true}); 
                     let testwhitemat = new THREE.MeshStandardMaterial({color: 0xAAAAAA, wireframe: false}); 
+
+                    let stonecoef = 0.10;
+                    function pickUV(i,j,z,geometry){
+                            
+                    }
                     for (let i = 0; i < LevelSize; i++) {
                         for (let j = 0; j < LevelSize; j++) {
                             for (let z = 0; z < 100; z++){
@@ -194,13 +198,9 @@
                                             setUVcoordinates(4+offset,6,uvArray);
                                             break;
                                     }
-                                    plane = new THREE.Mesh(planegeometry, blocksMaterial);
                                     meshesArray.push(planegeometry);
-                                    plane.receiveShadow = true;
-                                    plane.castShadow = true;
-                                    scene.add(plane);
                                 }
-                                if(map[i][j+1]==undefined || map[i][j+1][z]==Block.Air){
+                                if(map[i][j+1]==undefined || map[i][j+1][z]==Block.Air){ //смотрит в камеру
                                     let planegeometry = new THREE.PlaneGeometry(); 
                                     planegeometry.rotateY(0);
                                     planegeometry.translate(i,z,j+0.5);  
@@ -212,15 +212,64 @@
                                             break;
                                         case Block.Dirt:
                                             setUVcoordinates(1,7,uvArray);
+                                            if (Math.random() < stonecoef) setUVcoordinates(2,7,uvArray);
                                             break;
                                     }
-                                    plane = new THREE.Mesh(planegeometry, blocksMaterial);
                                     meshesArray.push(planegeometry);
-                                    plane.receiveShadow = true;
-                                    plane.castShadow = true;
-                                    scene.add(plane);
                                 }
-                                
+                                if(map[i][j-1]==undefined || map[i][j-1][z]==Block.Air){
+                                    let planegeometry = new THREE.PlaneGeometry(); 
+                                    planegeometry.rotateY(Math.PI);
+                                    planegeometry.translate(i,z,j-0.5);  
+                                    const uvAttribute = planegeometry.getAttribute("uv");
+                                    const uvArray = uvAttribute.array;      
+                                    switch (map[i][j][z]){
+                                        case Block.Grass:
+                                            setUVcoordinates(0,7,uvArray);
+                                            break;
+                                        case Block.Dirt:
+                                            setUVcoordinates(1,7,uvArray);
+                                            if (Math.random() < stonecoef) setUVcoordinates(2,7,uvArray);
+                                            break;
+                                    }
+                                    meshesArray.push(planegeometry);
+                                }
+                                if(map[i+1]==undefined || map[i+1][j][z]==Block.Air){
+                                    let planegeometry = new THREE.PlaneGeometry(); 
+                                    planegeometry.rotateY(Math.PI/2);
+                                    planegeometry.translate(i+0.5,z,j);  
+                                    const uvAttribute = planegeometry.getAttribute("uv");
+                                    const uvArray = uvAttribute.array;      
+                                    switch (map[i][j][z]){
+                                        case Block.Grass:
+                                            setUVcoordinates(0,7,uvArray);
+                                            break;
+                                        case Block.Dirt:
+                                            setUVcoordinates(1,7,uvArray);
+                                            if (Math.random() < stonecoef) setUVcoordinates(2,7,uvArray);
+                                            break;
+                                    }
+                                    let cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), testwhitemat);
+                                    meshesArray.push(planegeometry);
+                                }
+                                if(map[i-1]==undefined || map[i-1][j][z]==Block.Air){
+                                    let planegeometry = new THREE.PlaneGeometry(); 
+                                    planegeometry.rotateY(-Math.PI/2);
+                                    planegeometry.translate(i-0.5,z,j);  
+                                    const uvAttribute = planegeometry.getAttribute("uv");
+                                    const uvArray = uvAttribute.array;      
+                                    switch (map[i][j][z]){
+                                        case Block.Grass:
+                                            setUVcoordinates(0,7,uvArray);
+                                            break;
+                                        case Block.Dirt:
+                                            setUVcoordinates(1,7,uvArray);
+                                            if (Math.random() < stonecoef) setUVcoordinates(2,7,uvArray);
+                                            break;
+                                    }
+                                    let cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), testwhitemat);
+                                    meshesArray.push(planegeometry);
+                                }
                                 let cube;
                                 if(map[i][j][z] == Block.Dirt){
                                     cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), testdirtmat)
@@ -238,9 +287,13 @@
                                 cube.castShadow = false;
                                 //5scene.add(cube);
                             }
-                            
                         }
                     }
+                    let landscapemodel = BufferGeometryUtils.mergeBufferGeometries(meshesArray);
+                    let landscapeMesh = new THREE.Mesh(landscapemodel, blocksMaterial);
+                    landscapeMesh.receiveShadow = true;
+                    landscapeMesh.castShadow = true;
+                    scene.add(landscapeMesh);
                     console.info(new Blob([JSON.stringify(map)]).size);
                 }
                 function MapRange(array,layersNumber,maxNumber = 255){
@@ -302,22 +355,22 @@
                 } else if (key == "s") {
                     camera.position.z += zSpeed;
                 }
-                if (key == "E") {
+                if (key == "e") {
                     directionalLight.position.y += ySpeed;
                     directionalLight.target.position.y += ySpeed;
-                } else if (key == "Q") {
+                } else if (key == "q") {
                     directionalLight.position.y -= ySpeed;
                     directionalLight.target.position.y -= ySpeed;
-                } else if (key == "A") {
+                } else if (key == "a") {
                     directionalLight.position.x -= xSpeed;
                     directionalLight.target.position.x -= xSpeed;
-                } else if (key == "D") {
+                } else if (key == "d") {
                     directionalLight.position.x += xSpeed;
                     directionalLight.target.position.x += xSpeed;
-                } else if (key == "W") {
+                } else if (key == "w") {
                     directionalLight.position.z -= zSpeed;
                     directionalLight.target.position.z -= zSpeed;
-                } else if (key == "S") {
+                } else if (key == "s") {
                     directionalLight.position.z += zSpeed;
                     directionalLight.target.position.z += zSpeed;
                 }
@@ -332,9 +385,9 @@
                 imageLoader = new ImageLoader();
             }
             function getRandomInt(min, max) {
-            min = Math.ceil(min);
-            max = Math.floor(max);
-            return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
             }
             function setUVcoordinates(xOffset,yOffset,uvarray){
                 uvarray[0] = xOffset*uvOffset;     uvarray[1] = yOffset*(uvOffset)+uvOffset; //1 
@@ -346,22 +399,6 @@
                 requestAnimationFrame(animate);
                 composer.render();
             }
-            
-            
-    /* ************
-            let geometry1 = new THREE.BoxGeometry();
-            let geometry2 = new THREE.BoxGeometry();
-            geometry1.scale(5,1,5)
-            let mesh1 = new THREE.Mesh(geometry1, material1);
-            geometry2.translate(0,1,0);
-            let mesh2 = new THREE.Mesh(geometry2, material1);
-            mesh2.position.y += 1;
-            mesh2.receiveShadow = true;
-            let twogeometries = BufferGeometryUtils.mergeBufferGeometries([geometry1,geometry2]);
-            mesh2 = new THREE.Mesh(twogeometries,material1);
-            mesh2.receiveShadow = true;
-            mesh2.castShadow = true;
-            scene.add(mesh2);           ********** */ 
         </script>
     </body>
 
