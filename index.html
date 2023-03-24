@@ -142,10 +142,10 @@
                     directionalLight.position.z = -20;
                     
                     directionalLight.castShadow = true;
-                    directionalLight.shadow.mapSize.width = 1024*1; // default
-                    directionalLight.shadow.mapSize.height = 1024*1; // default
-                    directionalLight.shadow.camera.near = 0.5; // default
-                    directionalLight.shadow.camera.far = 128; // default
+                    directionalLight.shadow.mapSize.width = 1024*2; 
+                    directionalLight.shadow.mapSize.height = 1024*2; 
+                    directionalLight.shadow.camera.near = 0.5; 
+                    directionalLight.shadow.camera.far = 128; 
                     console.log(directionalLight.shadow.camera);
                     let lightradius = 30; 
                     directionalLight.shadow.camera.right = lightradius; 
@@ -164,10 +164,6 @@
                     let meshesArray = [];
                     const uvAttribute = planegeometry.getAttribute("uv");
                     const uvArray = uvAttribute.array;
-                    /*uvArray[0] = 0;uvArray[1] = 0.5;
-                    uvArray[2] = 0.5;uvArray[3] = 0.5;
-                    uvArray[4] = 0;uvArray[5] = 0;
-                    uvArray[6] = 0.5;uvArray[7] = 0;*/
                     //uvAttribute.needsUpdate = true;
                     plane = new THREE.Mesh(planegeometry, blocksMaterial);
                     plane.position.x = directionalLight.position.x;
@@ -178,14 +174,24 @@
                     let testdirtmat = new THREE.MeshStandardMaterial({color: 0x964B00, wireframe: true}); 
                     let testwhitemat = new THREE.MeshStandardMaterial({color: 0xAAAAAA, wireframe: false}); 
 
-                    let stonecoef = 0.10;
-                    function pickUV(i,j,z,geometry){
-                            
+                    function pickSideUV(i,j,z,geometry){
+                        const uvAttribute = geometry.getAttribute("uv");
+                        const uvArray = uvAttribute.array;      
+                        switch (map[i][j][z]){
+                            case Block.Grass:
+                                setUVcoordinates(0,7,uvArray);
+                                break;
+                            case Block.Dirt:
+                                setUVcoordinates(1,7,uvArray);
+                                if (Math.random() < stonecoef) setUVcoordinates(2,7,uvArray);
+                            break;
+                        }
                     }
+                    let stonecoef = 0.10;
                     for (let i = 0; i < LevelSize; i++) {
                         for (let j = 0; j < LevelSize; j++) {
                             for (let z = 0; z < 100; z++){
-                                if( map[i][j][z]==undefined || map[i][j][z]==Block.Air){continue}
+                                if(map[i][j][z]==undefined || map[i][j][z]==Block.Air){continue}
                                 if(map[i][j][z+1]==Block.Air || map[i][j][z+1]==undefined){
                                     let planegeometry = new THREE.PlaneGeometry(); 
                                     planegeometry.rotateX(-Math.PI/2);
@@ -204,73 +210,31 @@
                                     let planegeometry = new THREE.PlaneGeometry(); 
                                     planegeometry.rotateY(0);
                                     planegeometry.translate(i,z,j+0.5);  
-                                    const uvAttribute = planegeometry.getAttribute("uv");
-                                    const uvArray = uvAttribute.array;      
-                                    switch (map[i][j][z]){
-                                        case Block.Grass:
-                                            setUVcoordinates(0,7,uvArray);
-                                            break;
-                                        case Block.Dirt:
-                                            setUVcoordinates(1,7,uvArray);
-                                            if (Math.random() < stonecoef) setUVcoordinates(2,7,uvArray);
-                                            break;
-                                    }
+                                    pickSideUV(i,j,z,planegeometry);
                                     meshesArray.push(planegeometry);
                                 }
                                 if(map[i][j-1]==undefined || map[i][j-1][z]==Block.Air){
                                     let planegeometry = new THREE.PlaneGeometry(); 
                                     planegeometry.rotateY(Math.PI);
                                     planegeometry.translate(i,z,j-0.5);  
-                                    const uvAttribute = planegeometry.getAttribute("uv");
-                                    const uvArray = uvAttribute.array;      
-                                    switch (map[i][j][z]){
-                                        case Block.Grass:
-                                            setUVcoordinates(0,7,uvArray);
-                                            break;
-                                        case Block.Dirt:
-                                            setUVcoordinates(1,7,uvArray);
-                                            if (Math.random() < stonecoef) setUVcoordinates(2,7,uvArray);
-                                            break;
-                                    }
+                                    pickSideUV(i,j,z,planegeometry);
                                     meshesArray.push(planegeometry);
                                 }
                                 if(map[i+1]==undefined || map[i+1][j][z]==Block.Air){
                                     let planegeometry = new THREE.PlaneGeometry(); 
                                     planegeometry.rotateY(Math.PI/2);
                                     planegeometry.translate(i+0.5,z,j);  
-                                    const uvAttribute = planegeometry.getAttribute("uv");
-                                    const uvArray = uvAttribute.array;      
-                                    switch (map[i][j][z]){
-                                        case Block.Grass:
-                                            setUVcoordinates(0,7,uvArray);
-                                            break;
-                                        case Block.Dirt:
-                                            setUVcoordinates(1,7,uvArray);
-                                            if (Math.random() < stonecoef) setUVcoordinates(2,7,uvArray);
-                                            break;
-                                    }
-                                    let cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), testwhitemat);
+                                    pickSideUV(i,j,z,planegeometry);
                                     meshesArray.push(planegeometry);
                                 }
                                 if(map[i-1]==undefined || map[i-1][j][z]==Block.Air){
                                     let planegeometry = new THREE.PlaneGeometry(); 
                                     planegeometry.rotateY(-Math.PI/2);
                                     planegeometry.translate(i-0.5,z,j);  
-                                    const uvAttribute = planegeometry.getAttribute("uv");
-                                    const uvArray = uvAttribute.array;      
-                                    switch (map[i][j][z]){
-                                        case Block.Grass:
-                                            setUVcoordinates(0,7,uvArray);
-                                            break;
-                                        case Block.Dirt:
-                                            setUVcoordinates(1,7,uvArray);
-                                            if (Math.random() < stonecoef) setUVcoordinates(2,7,uvArray);
-                                            break;
-                                    }
-                                    let cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), testwhitemat);
+                                    pickSideUV(i,j,z,planegeometry);
                                     meshesArray.push(planegeometry);
                                 }
-                                let cube;
+                                /*let cube;
                                 if(map[i][j][z] == Block.Dirt){
                                     cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), testdirtmat)
                                 }
@@ -285,7 +249,7 @@
                                 cube.position.y = z;
                                 cube.receiveShadow = true;
                                 cube.castShadow = false;
-                                //5scene.add(cube);
+                                //5scene.add(cube);*/
                             }
                         }
                     }
@@ -337,8 +301,6 @@
             var ySpeed = 0.3;
             var zSpeed = 0.3;
             document.addEventListener("keydown", onDocumentKeyDown, false);
-            
-
             function onDocumentKeyDown(event) {
                 var key = event.key;
                 console.log(key);
