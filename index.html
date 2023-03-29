@@ -48,8 +48,10 @@
             initLoaders();
             
             await loadLevel(1);
+
+
+
             animate();
-            
             async function loadLevel(level){
                 initScene();
                 let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
@@ -131,6 +133,8 @@
                     blocksTexture.minFilter = THREE.NearestFilter;
                     blocksTexture.magFilter = THREE.NearestFilter;
                     blocksMaterial = new THREE.MeshStandardMaterial({map: blocksTexture/*, wireframe:true, color: 0xAAAAAAA*/});
+                    
+                    console.log(blocksMaterial.vertexShader);
                     /*Lighting*/
                     const color = 0xFFFFFF;
                     const intensity = 0.2;
@@ -250,6 +254,7 @@
                                 cube.receiveShadow = true;
                                 cube.castShadow = false;
                                 //5scene.add(cube);*/
+                                
                             }
                         }
                     }
@@ -304,6 +309,7 @@
             function onDocumentKeyDown(event) {
                 var key = event.key;
                 console.log(key);
+                console.log(event);
                 if (key == "e") {
                     camera.position.y += ySpeed;
                 } else if (key == "q") {
