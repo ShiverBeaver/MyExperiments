@@ -30,8 +30,8 @@
             
             let objLoader, textureLoader, mtlLoader, imageLoader;  
             let scene, camera, renderer, composer;
-            let blocksTexture, modelsTexture, waterTexture; 
-            let blocksMaterial, modelsMaterial, waterMaterial;
+            let blocksTexture, modelsTexture, waterTexture1, waterTexture2; 
+            let blocksMaterial, modelsMaterial, waterMaterial1, waterMaterial2;
             let currentLevel, landscapeMesh; 
             let LevelSize = 64;
             let uvOffset = 0.125;
@@ -55,7 +55,7 @@
             async function loadLevel(level){
                 initScene();
                 let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
-                noise = MapRange(noise,getRandomInt(6,8));
+                noise = MapRange(noise,getRandomInt(6,7));
                 let maxOffset =  noise[0].length - LevelSize;
                 let OffsetX = getRandomInt(0,maxOffset);
                 let OffsetZ = getRandomInt(0,maxOffset);
@@ -67,7 +67,7 @@
                     }
                 }
                 let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel.png');
-                template = MapRange(template,getRandomInt(7,11));
+                template = MapRange(template,getRandomInt(7,8));
                 maxOffset =  template[0].length - LevelSize;
                 OffsetX = getRandomInt(0,maxOffset);
                 OffsetZ = getRandomInt(0,maxOffset);
@@ -133,8 +133,19 @@
                     blocksTexture.minFilter = THREE.NearestFilter;
                     blocksTexture.magFilter = THREE.NearestFilter;
                     blocksMaterial = new THREE.MeshStandardMaterial({map: blocksTexture/*, wireframe:true, color: 0xAAAAAAA*/});
+                    waterTexture1 = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/water1.png');
+                    waterTexture2 = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/water2.png');
                     
-                    console.log(blocksMaterial.vertexShader);
+                    waterTexture1.wrapS = THREE.RepeatWrapping;
+                    waterTexture1.wrapT = THREE.RepeatWrapping;
+                    waterTexture1.repeat.x = LevelSize/2;
+                    waterTexture1.repeat.y = LevelSize/2;
+                    waterTexture1.minFilter = THREE.NearestFilter;
+                    waterTexture1.magFilter = THREE.NearestFilter;
+                    waterMaterial1 = new THREE.MeshStandardMaterial({map: waterTexture1, transparent: true, opacity: 0.60});
+                    
+                    waterMaterial2 = new THREE.MeshStandardMaterial({map: waterTexture2});
+                    
                     /*Lighting*/
                     const color = 0xFFFFFF;
                     const intensity = 0.2;
@@ -166,8 +177,8 @@
                 function loadMeshes(){
                     let planegeometry = new THREE.PlaneGeometry(); 
                     let meshesArray = [];
-                    const uvAttribute = planegeometry.getAttribute("uv");
-                    const uvArray = uvAttribute.array;
+                    let uvAttribute = planegeometry.getAttribute("uv");
+                    let uvArray = uvAttribute.array;
                     //uvAttribute.needsUpdate = true;
                     plane = new THREE.Mesh(planegeometry, blocksMaterial);
                     plane.position.x = directionalLight.position.x;
@@ -238,23 +249,6 @@
                                     pickSideUV(i,j,z,planegeometry);
                                     meshesArray.push(planegeometry);
                                 }
-                                /*let cube;
-                                if(map[i][j][z] == Block.Dirt){
-                                    cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), testdirtmat)
-                                }
-                                else if(map[i][j][z] == Block.Grass){
-                                    cube = new THREE.Mesh(new THREE.BoxGeometry( 1, 1, 1 ), testgrassmat)
-                                }
-                                else{
-                                    continue;
-                                }
-                                cube.position.x = i;
-                                cube.position.z = j;
-                                cube.position.y = z;
-                                cube.receiveShadow = true;
-                                cube.castShadow = false;
-                                //5scene.add(cube);*/
-                                
                             }
                         }
                     }
@@ -264,6 +258,31 @@
                     landscapeMesh.castShadow = true;
                     scene.add(landscapeMesh);
                     console.info(new Blob([JSON.stringify(map)]).size);
+
+                    
+                    let waterGeometry1 = new THREE.PlaneGeometry();
+                    waterGeometry1.scale(LevelSize,LevelSize,LevelSize);
+                    waterGeometry1.rotateX(-Math.PI/2);
+                    waterGeometry1.translate(LevelSize/2,0,LevelSize/2);
+                    waterGeometry1.translate(-0.5,0,-0.5);
+
+                    let waterGeometry2 = new THREE.PlaneGeometry();
+                    waterGeometry2.scale(LevelSize,LevelSize,LevelSize);
+                    waterGeometry2.rotateX(-Math.PI/2);
+                    waterGeometry2.translate(LevelSize/2,0,LevelSize/2);
+
+                    uvAttribute = waterGeometry2.getAttribute("uv");
+                    uvArray = uvAttribute.array;
+                    uvArray[0] = 0;uvArray[1] = LevelSize/2;
+                    uvArray[2] = LevelSize/2;uvArray[3] = LevelSize/2;
+                    uvArray[4] = 0;uvArray[5] = 0;
+                    uvArray[6] = LevelSize/2;uvArray[7] = 0;
+
+                    let waterMesh1 = new THREE.Mesh(waterGeometry1,waterMaterial1);
+                    let waterMesh2 = new THREE.Mesh(waterGeometry2,waterMaterial2);
+                    waterMesh1.position.y = 4.3;
+                    scene.add(waterMesh1);
+                    //scene.add(waterMesh2);
                 }
                 function MapRange(array,layersNumber,maxNumber = 255){
                     let coefficient = layersNumber/maxNumber;
@@ -357,6 +376,7 @@
                 max = Math.floor(max);
                 return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
             }
+            //pass the uvAttribute.array here 
             function setUVcoordinates(xOffset,yOffset,uvarray){
                 uvarray[0] = xOffset*uvOffset;     uvarray[1] = yOffset*(uvOffset)+uvOffset; //1 
                 uvarray[2] = xOffset*(uvOffset)+uvOffset; uvarray[3] = yOffset*(uvOffset)+uvOffset;//2 
