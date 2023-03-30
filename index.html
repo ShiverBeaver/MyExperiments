@@ -55,7 +55,7 @@
             async function loadLevel(level){
                 initScene();
                 let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
-                noise = MapRange(noise,getRandomInt(6,7));
+                noise = MapRange(noise,getRandomInt(6,6));
                 let maxOffset =  noise[0].length - LevelSize;
                 let OffsetX = getRandomInt(0,maxOffset);
                 let OffsetZ = getRandomInt(0,maxOffset);
@@ -115,6 +115,7 @@
                     camera.position.z = 20;
                     camera.position.x = 10.6;
                     camera.rotation.x = -Math.PI/4;
+                    //camera.rotation.x = -Math.PI/2 + 0.25;
                     /*Rendering*/
                     renderer = new THREE.WebGLRenderer({antialias:true});
                     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -134,17 +135,22 @@
                     blocksTexture.magFilter = THREE.NearestFilter;
                     blocksMaterial = new THREE.MeshStandardMaterial({map: blocksTexture/*, wireframe:true, color: 0xAAAAAAA*/});
                     waterTexture1 = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/water1.png');
-                    waterTexture2 = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/water2.png');
-                    
                     waterTexture1.wrapS = THREE.RepeatWrapping;
                     waterTexture1.wrapT = THREE.RepeatWrapping;
                     waterTexture1.repeat.x = LevelSize/2;
                     waterTexture1.repeat.y = LevelSize/2;
                     waterTexture1.minFilter = THREE.NearestFilter;
                     waterTexture1.magFilter = THREE.NearestFilter;
-                    waterMaterial1 = new THREE.MeshStandardMaterial({map: waterTexture1, transparent: true, opacity: 0.60});
+                    waterMaterial1 = new THREE.MeshStandardMaterial({map: waterTexture1, transparent: true, opacity: 0.50});
                     
-                    waterMaterial2 = new THREE.MeshStandardMaterial({map: waterTexture2});
+                    waterTexture2 = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/water2.png');
+                    waterTexture2.wrapS = THREE.RepeatWrapping;
+                    waterTexture2.wrapT = THREE.RepeatWrapping;
+                    waterTexture2.repeat.x = LevelSize/2;
+                    waterTexture2.repeat.y = LevelSize/2;
+                    waterTexture2.minFilter = THREE.NearestFilter;
+                    waterTexture2.magFilter = THREE.NearestFilter;
+                    waterMaterial2 = new THREE.MeshStandardMaterial({map: waterTexture2, transparent: true, opacity: 0.55});
                     
                     /*Lighting*/
                     const color = 0xFFFFFF;
@@ -270,19 +276,14 @@
                     waterGeometry2.scale(LevelSize,LevelSize,LevelSize);
                     waterGeometry2.rotateX(-Math.PI/2);
                     waterGeometry2.translate(LevelSize/2,0,LevelSize/2);
-
-                    uvAttribute = waterGeometry2.getAttribute("uv");
-                    uvArray = uvAttribute.array;
-                    uvArray[0] = 0;uvArray[1] = LevelSize/2;
-                    uvArray[2] = LevelSize/2;uvArray[3] = LevelSize/2;
-                    uvArray[4] = 0;uvArray[5] = 0;
-                    uvArray[6] = LevelSize/2;uvArray[7] = 0;
+                    waterGeometry2.translate(-0.5,0,-0.5);
 
                     let waterMesh1 = new THREE.Mesh(waterGeometry1,waterMaterial1);
                     let waterMesh2 = new THREE.Mesh(waterGeometry2,waterMaterial2);
                     waterMesh1.position.y = 4.3;
+                    waterMesh2.position.y = 3.3;
                     scene.add(waterMesh1);
-                    //scene.add(waterMesh2);
+                    scene.add(waterMesh2);
                 }
                 function MapRange(array,layersNumber,maxNumber = 255){
                     let coefficient = layersNumber/maxNumber;
