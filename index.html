@@ -13,9 +13,12 @@
                 }
             }
         </script>
+        <script src="http://mrdoob.github.io/stats.js/build/stats.min.js"></script>
+
     </head>
 
     <body>
+
         <script type="module">
             import * as THREE from 'three';
             import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
@@ -32,25 +35,26 @@
             let scene, camera, renderer, composer;
             let blocksTexture, modelsTexture, waterTexture1, waterTexture2; 
             let blocksMaterial, modelsMaterial, waterMaterial1, waterMaterial2;
+            let waterMesh1, waterMesh2;
             let currentLevel, landscapeMesh; 
-            let LevelSize = 64;
-            let uvOffset = 0.125;
             let ambientLight, directionalLight, lightTarget;
-            function createEnum(values) {
-                const enumObject = {};
-                for (const val of values) {
-                    enumObject[val] = val;
-                }
-                return Object.freeze(enumObject);
-            }
+            let uvOffset = 0.125;
+
+            let LevelSize = 64;
+            let waterLevel = 4; 
+            
+
+            
             const Block = createEnum(['Air','Grass', 'Dirt']);
             currentLevel = 0;
             initLoaders();
             
             await loadLevel(1);
-
-
-
+            // Adding stats panel to moniter application statistics
+            const stats = new Stats();
+            stats.showPanel(0);
+            //stats.showPanel(1)
+            document.body.appendChild(stats.dom)
             animate();
             async function loadLevel(level){
                 initScene();
@@ -67,7 +71,7 @@
                     }
                 }
                 let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel.png');
-                template = MapRange(template,getRandomInt(7,8));
+                template = MapRange(template,getRandomInt(6,6));
                 maxOffset =  template[0].length - LevelSize;
                 OffsetX = getRandomInt(0,maxOffset);
                 OffsetZ = getRandomInt(0,maxOffset);
@@ -110,16 +114,16 @@
                 function initScene(){
                     /*Camera*/
                     scene = new THREE.Scene();
-                    scene.background = new THREE.Color( 0x43A6C6 );
+                    scene.background = new THREE.Color( 0x338BA8 );
                     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-                    camera.position.y = 10;
-                    camera.position.z = 20;
-                    camera.position.x = 10.6;
-                    camera.rotation.x = -Math.PI/4;
-                    //camera.rotation.x = -Math.PI/2 + 0.25;
+                    camera.position.x = 20.6;
+                    camera.position.y = 15;
+                    camera.position.z = 30;
+                    camera.rotation.x = -Math.PI/4; //camera.rotation.x = -Math.PI/2 + 0.3;
                     /*Rendering*/
                     renderer = new THREE.WebGLRenderer({antialias:true});
                     renderer.setSize(window.innerWidth, window.innerHeight);
+
                     renderer.shadowMap.enabled = true;
                     document.body.appendChild(renderer.domElement);
                     composer = new EffectComposer(renderer);
@@ -134,7 +138,7 @@
                     blocksTexture = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/texture.png');
                     blocksTexture.minFilter = THREE.NearestFilter;
                     blocksTexture.magFilter = THREE.NearestFilter;
-                    blocksMaterial = new THREE.MeshStandardMaterial({map: blocksTexture/*, wireframe:true, color: 0xAAAAAAA*/});
+                    blocksMaterial = new THREE.MeshLambertMaterial({map: blocksTexture/*, wireframe:true, color: 0xAAAAAAA*/});
                     waterTexture1 = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/water1.png');
                     waterTexture1.wrapS = THREE.RepeatWrapping;
                     waterTexture1.wrapT = THREE.RepeatWrapping;
@@ -142,7 +146,7 @@
                     waterTexture1.repeat.y = LevelSize/2;
                     waterTexture1.minFilter = THREE.NearestFilter;
                     waterTexture1.magFilter = THREE.NearestFilter;
-                    waterMaterial1 = new THREE.MeshStandardMaterial({map: waterTexture1, transparent: true, opacity: 0.50});
+                    waterMaterial1 = new THREE.MeshBasicMaterial({map: waterTexture1, transparent: true, opacity: 0.50});
                     
                     waterTexture2 = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/water2.png');
                     waterTexture2.wrapS = THREE.RepeatWrapping;
@@ -151,21 +155,21 @@
                     waterTexture2.repeat.y = LevelSize/2;
                     waterTexture2.minFilter = THREE.NearestFilter;
                     waterTexture2.magFilter = THREE.NearestFilter;
-                    waterMaterial2 = new THREE.MeshStandardMaterial({map: waterTexture2, transparent: true, opacity: 0.55});
+                    waterMaterial2 = new THREE.MeshBasicMaterial({map: waterTexture2, transparent: true, opacity: 0.55, color: 0xffffff});
                     
                     /*Lighting*/
                     const color = 0xFFFFFF;
-                    const intensity = 0.2;
+                    const intensity = 0.55;
                     ambientLight = new THREE.AmbientLight(color, intensity);
                     scene.add(ambientLight);
-                    directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-                    directionalLight.position.x = 20;
-                    directionalLight.position.y = 20;
-                    directionalLight.position.z = -20;
+                    directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                    directionalLight.position.x = camera.position.x + 10;
+                    directionalLight.position.y = camera.position.y + 10;;
+                    directionalLight.position.z = camera.position.z - 30;;
                     
                     directionalLight.castShadow = true;
-                    directionalLight.shadow.mapSize.width = 1024*2; 
-                    directionalLight.shadow.mapSize.height = 1024*2; 
+                    directionalLight.shadow.mapSize.width = 1024*1; 
+                    directionalLight.shadow.mapSize.height = 1024*1; 
                     directionalLight.shadow.camera.near = 0.5; 
                     directionalLight.shadow.camera.far = 128; 
                     console.log(directionalLight.shadow.camera);
@@ -180,6 +184,7 @@
                     scene.add(directionalLight);
                     directionalLight.position.x += 10;
                     directionalLight.target.position.x += 10;
+                    directionalLight.target.position.z += 20;
                 }
                 function loadMeshes(){
                     let planegeometry = new THREE.PlaneGeometry(); 
@@ -196,6 +201,7 @@
                     let testdirtmat = new THREE.MeshStandardMaterial({color: 0x964B00, wireframe: true}); 
                     let testwhitemat = new THREE.MeshStandardMaterial({color: 0xAAAAAA, wireframe: false}); 
 
+                    //helper function that setting uv for side planes of block
                     function pickSideUV(i,j,z,geometry){
                         const uvAttribute = geometry.getAttribute("uv");
                         const uvArray = uvAttribute.array;      
@@ -223,12 +229,12 @@
                                     switch (map[i][j][z]){
                                         case Block.Grass:
                                             let offset = Math.random()>0.5?0:getRandomInt(1,4);
-                                            setUVcoordinates(4+offset,6,uvArray);
+                                            setUVcoordinates(4+(z<4?0:offset),6,uvArray);
                                             break;
                                     }
                                     meshesArray.push(planegeometry);
                                 }
-                                if(map[i][j+1]==undefined || map[i][j+1][z]==Block.Air){ //смотрит в камеру
+                                if(map[i][j+1]==undefined || map[i][j+1][z]==Block.Air){ //смотрит в камеру по дефолту
                                     let planegeometry = new THREE.PlaneGeometry(); 
                                     planegeometry.rotateY(0);
                                     planegeometry.translate(i,z,j+0.5);  
@@ -270,22 +276,25 @@
                     let waterGeometry1 = new THREE.PlaneGeometry();
                     waterGeometry1.scale(LevelSize,LevelSize,LevelSize);
                     waterGeometry1.rotateX(-Math.PI/2);
-                    waterGeometry1.translate(LevelSize/2,0,LevelSize/2);
-                    waterGeometry1.translate(-0.5,0,-0.5);
+                   
 
                     let waterGeometry2 = new THREE.PlaneGeometry();
                     waterGeometry2.scale(LevelSize,LevelSize,LevelSize);
                     waterGeometry2.rotateX(-Math.PI/2);
-                    waterGeometry2.translate(LevelSize/2,0,LevelSize/2);
-                    waterGeometry2.translate(-0.5,0,-0.5);
+                    
 
-                    let waterMesh1 = new THREE.Mesh(waterGeometry1,waterMaterial1);
-                    let waterMesh2 = new THREE.Mesh(waterGeometry2,waterMaterial2);
-                    waterMesh1.position.y = 4.3;
-                    waterMesh2.position.y = 3.3;
+                    waterMesh1 = new THREE.Mesh(waterGeometry1,waterMaterial1);
+                    waterMesh2 = new THREE.Mesh(waterGeometry2,waterMaterial2);
+                    waterMesh1.position.set(LevelSize/2-0.5,0,LevelSize/2-0.5);
+                    waterMesh2.position.set(LevelSize/2-0.5,0,LevelSize/2-0.5);
+
+                    waterMesh1.position.y = waterLevel+0.3;
+                    waterMesh2.position.y = waterLevel-1+0.3;
                     scene.add(waterMesh1);
                     scene.add(waterMesh2);
+                    let a = animateWater();
                 }
+
                 function MapRange(array,layersNumber,maxNumber = 255){
                     let coefficient = layersNumber/maxNumber;
                     let newarray = [];
@@ -297,6 +306,7 @@
                     }
                     return newarray;
                 }
+
                 //channel r - 0   g - 1   b - 2  a  - 3
                 async function LoadImageToArray(url,channel=0){
                     let array = []
@@ -321,6 +331,7 @@
                     return array;
                 }
             }
+
 
             var plane;
             var xSpeed = 0.3;
@@ -367,27 +378,50 @@
                 plane.position.y = directionalLight.position.y;
                 plane.position.z = directionalLight.position.z;
             };
+
+
             function initLoaders(){
                 textureLoader = new THREE.TextureLoader();
                 objLoader = new OBJLoader();
                 mtlLoader = new MTLLoader();
                 imageLoader = new ImageLoader();
             }
+
+            // The maximum is exclusive and the minimum is inclusive
             function getRandomInt(min, max) {
                 min = Math.ceil(min);
                 max = Math.floor(max);
-                return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
+                return Math.floor(Math.random() * (max - min) + min); 
+            }
+            function createEnum(values) {
+                const enumObject = {};
+                for (const val of values) {
+                    enumObject[val] = val;
+                }
+                return Object.freeze(enumObject);
             }
             //pass the uvAttribute.array here 
             function setUVcoordinates(xOffset,yOffset,uvarray){
-                uvarray[0] = xOffset*uvOffset;     uvarray[1] = yOffset*(uvOffset)+uvOffset; //1 
+                uvarray[0] = xOffset*uvOffset;            uvarray[1] = yOffset*(uvOffset)+uvOffset; //1 
                 uvarray[2] = xOffset*(uvOffset)+uvOffset; uvarray[3] = yOffset*(uvOffset)+uvOffset;//2 
-                uvarray[4] = xOffset*uvOffset;     uvarray[5] = yOffset*uvOffset;//3 
+                uvarray[4] = xOffset*uvOffset;            uvarray[5] = yOffset*uvOffset;//3 
                 uvarray[6] = xOffset*(uvOffset)+uvOffset; uvarray[7] = yOffset*uvOffset;// 4
+            }
+
+            //rotating constantly rotating water texture 90 degrees to make it look animated 
+            async function animateWater(){
+                while(true){
+                    waterMesh1.rotation.y += Math.PI/2;
+                    waterMesh2.rotation.y += Math.PI/2;
+                    await delay(400);
+                }
             }
             function animate() {
                 requestAnimationFrame(animate);
+                stats.begin();
                 composer.render();
+                stats.end();
+
             }
         </script>
     </body>
