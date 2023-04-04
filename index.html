@@ -33,10 +33,12 @@
             
             let objLoader, textureLoader, mtlLoader, imageLoader;  
             let scene, camera, renderer, composer;
-            let blocksTexture, modelsTexture, waterTexture1, waterTexture2; 
-            let blocksMaterial, modelsMaterial, waterMaterial1, waterMaterial2;
-            let waterMesh1, waterMesh2;
-            let currentLevel, landscapeMesh; 
+            let blocksTexture, modelsTexture, waterTexture1, waterTexture2, borderTexture; 
+            let blocksMaterial, modelsMaterial, waterMaterial1, waterMaterial2, borderMaterial;
+            let waterMesh1, waterMesh2, landscapeMesh;
+            let clouds = [];
+            let waterfallLayers = [];
+            let currentLevel; 
             let ambientLight, directionalLight, lightTarget;
             let uvOffset = 0.125;
 
@@ -59,7 +61,7 @@
             async function loadLevel(level){
                 initScene();
                 let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
-                noise = MapRange(noise,getRandomInt(6,6));
+                noise = MapRange(noise,getRandomInt(5,5));
                 let maxOffset =  noise[0].length - LevelSize;
                 let OffsetX = getRandomInt(0,maxOffset);
                 let OffsetZ = getRandomInt(0,maxOffset);
@@ -119,6 +121,7 @@
                     camera.position.x = 20.6;
                     camera.position.y = 15;
                     camera.position.z = 30;
+
                     camera.rotation.x = -Math.PI/4; //camera.rotation.x = -Math.PI/2 + 0.3;
                     /*Rendering*/
                     renderer = new THREE.WebGLRenderer({antialias:true});
@@ -157,6 +160,11 @@
                     waterTexture2.magFilter = THREE.NearestFilter;
                     waterMaterial2 = new THREE.MeshBasicMaterial({map: waterTexture2, transparent: true, opacity: 0.55, color: 0xffffff});
                     
+                    borderTexture = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/clouds.png');
+                    borderTexture.minFilter = THREE.NearestFilter;
+                    borderTexture.magFilter = THREE.NearestFilter;
+                    borderMaterial = new THREE.MeshBasicMaterial({map: borderTexture, transparent: true, opacity: 0.50});
+
                     /*Lighting*/
                     const color = 0xFFFFFF;
                     const intensity = 0.55;
@@ -192,11 +200,7 @@
                     let uvAttribute = planegeometry.getAttribute("uv");
                     let uvArray = uvAttribute.array;
                     //uvAttribute.needsUpdate = true;
-                    plane = new THREE.Mesh(planegeometry, blocksMaterial);
-                    plane.position.x = directionalLight.position.x;
-                    plane.position.y = directionalLight.position.y;
-                    plane.position.z = directionalLight.position.z;
-                    scene.add(plane);
+                    
                     let testgrassmat = new THREE.MeshStandardMaterial({color: 0x009900, wireframe: true}); 
                     let testdirtmat = new THREE.MeshStandardMaterial({color: 0x964B00, wireframe: true}); 
                     let testwhitemat = new THREE.MeshStandardMaterial({color: 0xAAAAAA, wireframe: false}); 
@@ -290,9 +294,74 @@
 
                     waterMesh1.position.y = waterLevel+0.3;
                     waterMesh2.position.y = waterLevel-1+0.3;
+                    waterMesh1.receiveShadow = true;
+                    waterMesh1.castShadow = true;
+                    waterMesh2.receiveShadow = true;
+                    waterMesh2.castShadow = true;
                     scene.add(waterMesh1);
                     scene.add(waterMesh2);
-                    let a = animateWater();
+                    animateWater();
+
+                    let waterfallGeometries = [[],[],[],[]];
+
+                    for (let i = 0; i < LevelSize; i++) {
+                        if(map[i][LevelSize-1][waterLevel]==Block.Air){
+                            for (let z = 0; z<4; z++){
+                                let planegeometry = new THREE.PlaneGeometry(); 
+                                planegeometry.rotateY(0);
+                                planegeometry.translate(i,0.3-0.5,LevelSize-0.499);  
+                                let uvAttribute = planegeometry.getAttribute("uv");
+                                let uvArray = uvAttribute.array;
+                                setUVcoordinates(getRandomInt(0,3),3-z,uvArray);
+                                waterfallGeometries[z].push(planegeometry);
+                            }
+                        }
+                        if(map[i][0][waterLevel]==Block.Air){
+                            for (let z = 0; z<4; z++){
+                                let planegeometry = new THREE.PlaneGeometry(); 
+                                planegeometry.rotateY(Math.PI);
+                                planegeometry.translate(i,0.3-0.5,-0.501);  
+                                let uvAttribute = planegeometry.getAttribute("uv");
+                                let uvArray = uvAttribute.array;
+                                setUVcoordinates(getRandomInt(0,3),3-z,uvArray);
+                                waterfallGeometries[z].push(planegeometry);
+                                
+                            }
+                        }
+                    }
+                    for (let j = 0; j < LevelSize; j++) {
+                        if(map[LevelSize-1][j][waterLevel]==Block.Air){
+                            for (let z = 0; z<4; z++){
+                                let planegeometry = new THREE.PlaneGeometry(); 
+                                planegeometry.rotateY(Math.PI/2);
+                                planegeometry.translate(LevelSize-0.499,0.3-0.5,j);  
+                                let uvAttribute = planegeometry.getAttribute("uv");
+                                let uvArray = uvAttribute.array;
+                                setUVcoordinates(getRandomInt(0,3),3-z,uvArray);
+                                waterfallGeometries[z].push(planegeometry);
+                            }
+                        }
+                        if(map[0][j][waterLevel]==Block.Air){
+                            for (let z = 0; z<4; z++){
+                                let planegeometry = new THREE.PlaneGeometry(); 
+                                planegeometry.rotateY(-Math.PI/2);
+                                planegeometry.translate(-0.501,0.3-0.5,j);  
+                                let uvAttribute = planegeometry.getAttribute("uv");
+                                let uvArray = uvAttribute.array;
+                                setUVcoordinates(getRandomInt(0,3),3-z,uvArray);
+                                waterfallGeometries[z].push(planegeometry);
+                                
+                            }
+                        }
+                    }
+
+                    for (let z = 0; z<4; z++){
+                        waterfallLayers[z] = new THREE.Mesh(BufferGeometryUtils.mergeBufferGeometries(waterfallGeometries[z]),borderMaterial);
+                        waterfallLayers[z].position.y = waterLevel-z;
+                        scene.add(waterfallLayers[z]);
+                    }
+                    console.log(waterfallLayers);
+                    animateWaterFall();
                 }
 
                 function MapRange(array,layersNumber,maxNumber = 255){
@@ -334,9 +403,9 @@
 
 
             var plane;
-            var xSpeed = 0.3;
-            var ySpeed = 0.3;
-            var zSpeed = 0.3;
+            var xSpeed = 0.6;
+            var ySpeed = 0.6;
+            var zSpeed = 0.6;
             document.addEventListener("keydown", onDocumentKeyDown, false);
             function onDocumentKeyDown(event) {
                 var key = event.key;
@@ -414,6 +483,18 @@
                     waterMesh1.rotation.y += Math.PI/2;
                     waterMesh2.rotation.y += Math.PI/2;
                     await delay(400);
+                }
+            }
+            async function animateWaterFall(){
+                while(true){
+                    await delay(400);
+                    for(let i = 0; i<4; i++){
+                        waterfallLayers[i].position.y -= 1;
+                        if(waterfallLayers[i].position.y < waterLevel-3)
+                        {
+                            waterfallLayers[i].position.y += 4;
+                        }
+                    }
                 }
             }
             function animate() {
