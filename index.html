@@ -42,7 +42,7 @@
             let ambientLight, directionalLight, lightTarget;
             let uvOffset = 0.125;
 
-            let LevelSize = 64;
+            let LevelSize = 128;
             let waterLevel = 4; 
             
 
@@ -61,7 +61,7 @@
             async function loadLevel(level){
                 initScene();
                 let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
-                noise = MapRange(noise,getRandomInt(5,5));
+                noise = MapRange(noise,getRandomInt(4,4));
                 let maxOffset =  noise[0].length - LevelSize;
                 let OffsetX = getRandomInt(0,maxOffset);
                 let OffsetZ = getRandomInt(0,maxOffset);
@@ -73,7 +73,7 @@
                     }
                 }
                 let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel.png');
-                template = MapRange(template,getRandomInt(6,6));
+                template = MapRange(template,getRandomInt(8,8));
                 maxOffset =  template[0].length - LevelSize;
                 OffsetX = getRandomInt(0,maxOffset);
                 OffsetZ = getRandomInt(0,maxOffset);
@@ -117,7 +117,7 @@
                     /*Camera*/
                     scene = new THREE.Scene();
                     scene.background = new THREE.Color( 0x338BA8 );
-                    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+                    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);//100
                     camera.position.x = 20.6;
                     camera.position.y = 15;
                     camera.position.z = 30;
@@ -181,7 +181,7 @@
                     directionalLight.shadow.camera.near = 0.5; 
                     directionalLight.shadow.camera.far = 128; 
                     console.log(directionalLight.shadow.camera);
-                    let lightradius = 30; 
+                    let lightradius = 200; //60
                     directionalLight.shadow.camera.right = lightradius; 
                     directionalLight.shadow.camera.top = lightradius; 
                     directionalLight.shadow.camera.bottom = -lightradius;
