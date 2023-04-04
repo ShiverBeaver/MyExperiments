@@ -72,8 +72,8 @@
                         levelHeightNoise[i][j] = noise[i+OffsetX][j+OffsetZ];
                     }
                 }
-                let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel.png');
-                template = MapRange(template,getRandomInt(8,8));
+                let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel3.png');
+                template = MapRange(template,getRandomInt(12,12));
                 maxOffset =  template[0].length - LevelSize;
                 OffsetX = getRandomInt(0,maxOffset);
                 OffsetZ = getRandomInt(0,maxOffset);
