@@ -8,7 +8,7 @@
         <script type="importmap">
             {
                 "imports": {
-                    "three": "https://unpkg.com/three/build/three.module.js",
+                    "three": "https://unpkg.com/three@0.149.0/build/three.module.js",
                     "three/": "https://unpkg.com/three@0.149.0/"
                 }
             }
@@ -47,7 +47,7 @@
             
 
             
-            const Block = createEnum(['Air','Grass', 'Dirt']);
+            const Block = createEnum(['Air','Grass', 'Dirt','Road']);
             currentLevel = 0;
             initLoaders();
             
@@ -60,8 +60,11 @@
             animate();
             async function loadLevel(level){
                 initScene();
-                let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png');
+                let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png',1);
+                console.log(noise);
+                
                 noise = MapRange(noise,getRandomInt(4,4));
+                console.log(noise);
                 let maxOffset =  noise[0].length - LevelSize;
                 let OffsetX = getRandomInt(0,maxOffset);
                 let OffsetZ = getRandomInt(0,maxOffset);
@@ -72,8 +75,8 @@
                         levelHeightNoise[i][j] = noise[i+OffsetX][j+OffsetZ];
                     }
                 }
-                let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel3.png');
-                template = MapRange(template,getRandomInt(12,12));
+                let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel.png',1);
+                template = MapRange(template,getRandomInt(14,14));
                 maxOffset =  template[0].length - LevelSize;
                 OffsetX = getRandomInt(0,maxOffset);
                 OffsetZ = getRandomInt(0,maxOffset);
@@ -110,7 +113,7 @@
                         map[i][j][HeightMap[i][j]]=Block.Grass; 
                     }
                 }
-                console.log(map);
+                //console.log(map);
 
                 loadMeshes();
                 function initScene(){
@@ -180,7 +183,7 @@
                     directionalLight.shadow.mapSize.height = 1024*1; 
                     directionalLight.shadow.camera.near = 0.5; 
                     directionalLight.shadow.camera.far = 128; 
-                    console.log(directionalLight.shadow.camera);
+                    //console.log(directionalLight.shadow.camera);
                     let lightradius = 200; //60
                     directionalLight.shadow.camera.right = lightradius; 
                     directionalLight.shadow.camera.top = lightradius; 
@@ -360,7 +363,6 @@
                         waterfallLayers[z].position.y = waterLevel-z;
                         scene.add(waterfallLayers[z]);
                     }
-                    console.log(waterfallLayers);
                     animateWaterFall();
                 }
 
@@ -443,9 +445,6 @@
                     directionalLight.position.z += zSpeed;
                     directionalLight.target.position.z += zSpeed;
                 }
-                plane.position.x = directionalLight.position.x;
-                plane.position.y = directionalLight.position.y;
-                plane.position.z = directionalLight.position.z;
             };
 
 
