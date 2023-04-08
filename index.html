@@ -42,7 +42,7 @@
             let ambientLight, directionalLight, lightTarget;
             let uvOffset = 0.125;
 
-            let LevelSize = 128;
+            let LevelSize = 40;
             let waterLevel = 4; 
             
 
@@ -61,10 +61,7 @@
             async function loadLevel(level){
                 initScene();
                 let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png',1);
-                console.log(noise);
-                
-                noise = MapRange(noise,getRandomInt(4,4));
-                console.log(noise);
+                noise = MapRange(noise,getRandomInt(6,6));
                 let maxOffset =  noise[0].length - LevelSize;
                 let OffsetX = getRandomInt(0,maxOffset);
                 let OffsetZ = getRandomInt(0,maxOffset);
@@ -75,8 +72,8 @@
                         levelHeightNoise[i][j] = noise[i+OffsetX][j+OffsetZ];
                     }
                 }
-                let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel.png',1);
-                template = MapRange(template,getRandomInt(14,14));
+                let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel_colored.png',1);
+                template = MapRange(template,getRandomInt(0,14));
                 maxOffset =  template[0].length - LevelSize;
                 OffsetX = getRandomInt(0,maxOffset);
                 OffsetZ = getRandomInt(0,maxOffset);
@@ -87,11 +84,29 @@
                         levelHeightTemplate[i][j] = template[i+OffsetX][j+OffsetZ];
                     }
                 }
+                
+                let villagetemplate = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel_colored.png',0);
+                villagetemplate = MapRange(villagetemplate,100);
+                console.log(villagetemplate);
+                let villagelevelTemplate =  [];
+                for (let i = 0; i < LevelSize; i++) {
+                    villagelevelTemplate[i] = [];
+                    for (let j = 0; j < LevelSize; j++) {
+                        villagelevelTemplate[i][j] = villagetemplate[i+OffsetX][j+OffsetZ];
+                    }
+                }
+
+                
                 let HeightMap =  [];
                 for (let i = 0; i < LevelSize; i++) {
                     HeightMap[i] = [];
                     for (let j = 0; j < LevelSize; j++) {
-                        HeightMap[i][j] = levelHeightTemplate[i][j]+levelHeightNoise[i][j];
+                        if (villagelevelTemplate[i][j] >0){
+                            HeightMap[i][j] = levelHeightTemplate[i][j] + 2;
+                        }
+                        else{
+                            HeightMap[i][j] = levelHeightTemplate[i][j]+levelHeightNoise[i][j];
+                        }
                     }
                 }
                 
@@ -114,7 +129,7 @@
                     }
                 }
                 //console.log(map);
-
+                
                 loadMeshes();
                 function initScene(){
                     /*Camera*/
@@ -359,9 +374,11 @@
                     }
 
                     for (let z = 0; z<4; z++){
-                        waterfallLayers[z] = new THREE.Mesh(BufferGeometryUtils.mergeBufferGeometries(waterfallGeometries[z]),borderMaterial);
-                        waterfallLayers[z].position.y = waterLevel-z;
-                        scene.add(waterfallLayers[z]);
+                        if(waterfallGeometries[z].length>0){
+                            waterfallLayers[z] = new THREE.Mesh(BufferGeometryUtils.mergeBufferGeometries(waterfallGeometries[z]),borderMaterial);
+                            waterfallLayers[z].position.y = waterLevel-z;
+                            scene.add(waterfallLayers[z]);
+                        }
                     }
                     animateWaterFall();
                 }
