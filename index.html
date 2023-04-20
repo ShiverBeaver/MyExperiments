@@ -39,15 +39,21 @@
             let clouds = [];
             let waterfallLayers = [];
             let currentLevel; 
+            let map;
+            let entities;
             let ambientLight, directionalLight, lightTarget;
             let uvOffset = 0.125;
 
-            let LevelSize = 40;
+            let generateVillage = true;
+            let villageRadius = 10;
+            let housesRange = [4,7];
+
+            let LevelSize = 128;
             let waterLevel = 4; 
-            
 
             
             const Block = createEnum(['Air','Grass', 'Dirt','Road']);
+            const Entity = createEnum(['Empty','NotPlaceable', 'House','Waterlily']);
             currentLevel = 0;
             initLoaders();
             
@@ -73,7 +79,7 @@
                     }
                 }
                 let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel_colored.png',1);
-                template = MapRange(template,getRandomInt(0,14));
+                template = MapRange(template,getRandomInt(14,14));
                 maxOffset =  template[0].length - LevelSize;
                 OffsetX = getRandomInt(0,maxOffset);
                 OffsetZ = getRandomInt(0,maxOffset);
@@ -84,17 +90,33 @@
                         levelHeightTemplate[i][j] = template[i+OffsetX][j+OffsetZ];
                     }
                 }
-                
+
                 let villagetemplate = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel_colored.png',0);
                 villagetemplate = MapRange(villagetemplate,100);
                 console.log(villagetemplate);
+                let villageSpawnPoints = 0;
                 let villagelevelTemplate =  [];
                 for (let i = 0; i < LevelSize; i++) {
                     villagelevelTemplate[i] = [];
                     for (let j = 0; j < LevelSize; j++) {
                         villagelevelTemplate[i][j] = villagetemplate[i+OffsetX][j+OffsetZ];
+                        if(villagelevelTemplate[i][j]>98) villageSpawnPoints++;
                     }
                 }
+                let spawnPoint = getRandomInt(0,villageSpawnPoints);
+                let currentPoint = 0;
+                let villagePointX = 0, villagePointZ = 0;
+                for (let i = 0; i < LevelSize; i++) {
+                    for (let j = 0; j < LevelSize; j++) {
+                        if(villagelevelTemplate[i][j]>98) currentPoint++;
+
+                        if(currentPoint == spawnPoint){
+                            villagePointX = i;
+                            villagePointZ = j;
+                        }
+                    }
+                }
+                
 
                 
                 let HeightMap =  [];
@@ -110,7 +132,7 @@
                     }
                 }
                 
-                let map =  [];
+                map =  [];
                 for (let i = 0; i < LevelSize; i++) {
                     map[i] = [];
                     for (let j = 0; j < LevelSize; j++) {
@@ -128,17 +150,90 @@
                         map[i][j][HeightMap[i][j]]=Block.Grass; 
                     }
                 }
-                //console.log(map);
+
+                entities =  [];
+                for (let i = 0; i < LevelSize; i++) {
+                    entities[i] = [];
+                    for (let j = 0; j < LevelSize; j++) {
+                        entities[i][j] = []
+                        for(let z = 0;z < 100; z++){
+                            entities[i][j][z] = Entity.Empty;
+                        }
+                    }
+                }
+
+                if (generateVillage){
+                    let y_ = HeightMap[villagePointX][villagePointZ];
+                    //map[villagePointX][villagePointZ][y_]=Block.Dirt;
+                    let j_ = villagePointZ;
+                    for(let i = villagePointX-villageRadius; i < villagePointX+villageRadius; i++){
+                        if (map[i][j_][y_] == Block.Grass){
+                            let offset_ = Math.round((Math.random() - 0.5)*1.29);
+                            map[i][j_][y_] = Block.Road;
+                            j_+=offset_;
+                            map[i][j_][y_] = Block.Road;
+                        }
+                    }
+                    let i_ = villagePointX;
+                    for(let j = villagePointZ-villageRadius; j < villagePointZ+villageRadius; j++){
+                        if (map[i_][j][y_] == Block.Grass){
+                            let offset_ = Math.round((Math.random() - 0.5)*1.29);
+                            map[i_][j][y_] = Block.Road;
+                            i_ += offset_;
+                            map[i_][j][y_] = Block.Road;
+                        }
+                    }
+                    function checkRadius(array,i,j,y,rad,object_){
+                        let result = true;
+                        for(let r = 0; r<=rad; r++){
+                            if(array[i-r][j][y]==object_&&array[i+r][j][y]==object_&&
+                            array[i][j-r][y]==object_&&array[i][j+r][y]==object_){
+                                
+                            }
+                            else{
+                                result = false;
+                            }
+                        }
+                        return result;
+                    }
+                    let housesNum = getRandomInt(housesRange[0],housesRange[1]);
+                    for(let k = 0; k<housesNum;){
+                        i_ = getRandomInt(villagePointX-villageRadius,villagePointX+villageRadius);
+                        j_ = getRandomInt(villagePointZ-villageRadius,villagePointZ+villageRadius);
+                        if(checkRadius(map,i_,j_,y_,2,Block.Grass)&&checkRadius(entities,i_,j_,y_,3,Entity.Empty)){
+                            for (let ii = i_ - 2; ii<= i_+2; ii++){
+                                for (let jj = j_ - 2; jj<= j_+2; jj++){
+                                    entities[ii][jj][y_] = Entity.NotPlaceable; 
+                                }
+                            }
+                            entities[i_][j_][y_] = Entity.House;
+
+
+                            k++;
+                            
+                            let left_i = i_;
+                            let right_i = i_; 
+                            let up_j = j_;
+                            let down_j=j_
+                            for(let step = 0; step<villageRadius; step++){
+                                
+                            }
+                        }
+                        
+                    }
+
+                }
                 
+                //console.log(map);
                 loadMeshes();
                 function initScene(){
                     /*Camera*/
                     scene = new THREE.Scene();
                     scene.background = new THREE.Color( 0x338BA8 );
                     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);//100
-                    camera.position.x = 20.6;
-                    camera.position.y = 15;
-                    camera.position.z = 30;
+                    camera.position.x = 20.6+40;
+                    camera.position.y = 20;
+                    camera.position.z = 30+40;
 
                     camera.rotation.x = -Math.PI/4; //camera.rotation.x = -Math.PI/2 + 0.3;
                     /*Rendering*/
@@ -199,7 +294,7 @@
                     directionalLight.shadow.camera.near = 0.5; 
                     directionalLight.shadow.camera.far = 128; 
                     //console.log(directionalLight.shadow.camera);
-                    let lightradius = 200; //60
+                    let lightradius = 60; //60
                     directionalLight.shadow.camera.right = lightradius; 
                     directionalLight.shadow.camera.top = lightradius; 
                     directionalLight.shadow.camera.bottom = -lightradius;
@@ -241,17 +336,77 @@
                     for (let i = 0; i < LevelSize; i++) {
                         for (let j = 0; j < LevelSize; j++) {
                             for (let z = 0; z < 100; z++){
+                                //blocks
                                 if(map[i][j][z]==undefined || map[i][j][z]==Block.Air){continue}
                                 if(map[i][j][z+1]==Block.Air || map[i][j][z+1]==undefined){
                                     let planegeometry = new THREE.PlaneGeometry(); 
                                     planegeometry.rotateX(-Math.PI/2);
                                     planegeometry.translate(i,z+0.5,j);  
                                     const uvAttribute = planegeometry.getAttribute("uv");
-                                    const uvArray = uvAttribute.array;      
+                                    const uvArray = uvAttribute.array;  
+                                    let offset;
+
                                     switch (map[i][j][z]){
                                         case Block.Grass:
-                                            let offset = Math.random()>0.5?0:getRandomInt(1,4);
+                                            offset = Math.random()>0.5?0:getRandomInt(1,4);
                                             setUVcoordinates(4+(z<4?0:offset),6,uvArray);
+                                            break;
+                                        case Block.Road:
+                                            if(map[i][j+1][z]==Block.Road&&map[i][j-1][z]==Block.Road && map[i+1][j][z]==Block.Road&&map[i-1][j][z]==Block.Road) 
+                                            {
+                                                setUVcoordinates(2,5,uvArray);break;//down && up && right && left 
+                                            }
+                                            if(map[i][j-1][z]==Block.Road && map[i+1][j][z]==Block.Road&&map[i-1][j][z]==Block.Road) 
+                                            {
+                                                setUVcoordinates(5,4,uvArray);break;// up && right && left 
+                                            }
+                                            if(map[i][j+1][z]==Block.Road&& map[i+1][j][z]==Block.Road&&map[i-1][j][z]==Block.Road) 
+                                            {
+                                                setUVcoordinates(4,4,uvArray);break;//down && right && left 
+                                            }
+                                            if(map[i][j+1][z]==Block.Road&&map[i][j-1][z]==Block.Road &&map[i-1][j][z]==Block.Road) 
+                                            {
+                                                setUVcoordinates(6,4,uvArray);break;//down && up && left 
+                                            }
+                                            if(map[i][j+1][z]==Block.Road&&map[i][j-1][z]==Block.Road && map[i+1][j][z]==Block.Road) 
+                                            {
+                                                setUVcoordinates(7,4,uvArray);break;//down && up && right 
+                                            }
+                                            if(map[i][j+1][z]==Block.Road&&map[i+1][j][z]==Block.Road){ //down && right
+                                                setUVcoordinates(2,4,uvArray);break;
+                                            }
+                                            if(map[i][j+1][z]==Block.Road&&map[i-1][j][z]==Block.Road){ //down && left 
+                                                setUVcoordinates(3,4,uvArray);break;
+                                            }
+                                            if(map[i][j-1][z]==Block.Road&&map[i+1][j][z]==Block.Road){ //up && right
+                                                setUVcoordinates(0,4,uvArray);break;
+                                            }
+                                            if(map[i][j-1][z]==Block.Road&&map[i-1][j][z]==Block.Road){ //up && left 
+                                                setUVcoordinates(1,4,uvArray);break;
+                                            }
+                                            
+                                            if(map[i][j+1][z]==Block.Road&&map[i][j-1][z]==Block.Road) //down && up 
+                                            {
+                                                setUVcoordinates(0,5,uvArray);break;
+                                            }
+                                            if(map[i+1][j][z]==Block.Road&&map[i-1][j][z]==Block.Road) //right && left 
+                                            {
+                                                setUVcoordinates(1,5,uvArray);break;
+                                            }
+                                            if(map[i][j+1][z]==Block.Road){ //down
+                                                setUVcoordinates(6,5,uvArray);break;
+                                            }
+                                            if(map[i][j-1][z]==Block.Road){ //up
+                                                setUVcoordinates(4,5,uvArray);break;
+                                            }
+                                            if(map[i+1][j][z]==Block.Road){ //right
+                                                setUVcoordinates(5,5,uvArray);break;
+                                            }
+                                            if(map[i-1][j][z]==Block.Road){ //left
+                                                setUVcoordinates(7,5,uvArray);break;
+                                            }
+                                            
+                                            setUVcoordinates(3,5,uvArray);
                                             break;
                                     }
                                     meshesArray.push(planegeometry);
@@ -284,15 +439,39 @@
                                     pickSideUV(i,j,z,planegeometry);
                                     meshesArray.push(planegeometry);
                                 }
+                                //entities
+
+                                switch(entities[i][j][z]){
+                                    case Entity.House:
+                                        let house = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0xAA0000}));
+                                        scene.add(house);
+                                        house.position.x = i;
+                                        house.position.y = z+1.5;
+                                        house.position.z = j;
+                                        break;
+                                    case Entity.NotPlaceable:
+                                        let block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0x0000AA}));
+                                        scene.add(block);
+                                        block.position.x = i;
+                                        block.position.y = z+1;
+                                        block.position.z = j;
+                                        break;
+                                }
                             }
                         }
                     }
+                    /*let villagepoint = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0xAA0000}));
+                    villagepoint.position.y = HeightMap[villageSpawnPointX][villageSpawnPointZ];
+                    villagepoint.position.x = villageSpawnPointX;
+                    villagepoint.position.z = villageSpawnPointZ;
+                    scene.add(villagepoint);*/
+                    
                     let landscapemodel = BufferGeometryUtils.mergeBufferGeometries(meshesArray);
                     let landscapeMesh = new THREE.Mesh(landscapemodel, blocksMaterial);
                     landscapeMesh.receiveShadow = true;
                     landscapeMesh.castShadow = true;
                     scene.add(landscapeMesh);
-                    console.info(new Blob([JSON.stringify(map)]).size);
+                    //console.info(new Blob([JSON.stringify(map)]).size);
 
                     
                     let waterGeometry1 = new THREE.PlaneGeometry();
