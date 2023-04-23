@@ -244,21 +244,41 @@
                         let x_ = VillageHouses[k].x;
                         let z_ = VillageHouses[k].z;
                         let y_ = VillageHouses[k].y;
-                        if(map[x_-1][z_][y_] == Block.Road){
-                            VillageHouses[k].Way = [-1,0]; 
-                        }
-                        if(map[x_+1][z_][y_] == Block.Road){
-                            VillageHouses[k].Way = [1,0];
-                        }
-                        if(map[x_][z_-1][y_] == Block.Road){
-                            VillageHouses[k].Way = [0,-1]; 
-                        }
-                        if(map[x_][z_+1][y_] == Block.Road){
-                            VillageHouses[k].Way = [0,1]; 
-                        }
                         for (let ii = x_ - 2; ii<= x_+2; ii++){
                             for (let jj = z_ - 2; jj<= z_+2; jj++){
                                 entities[ii][jj][y_] = Entity.Empty; 
+                            }
+                        }
+                        if(map[x_-1][z_][y_] == Block.Road){
+                            VillageHouses[k].Way = [-1,0]; 
+                            for (let ii = x_; ii<= x_+2; ii++){
+                                for (let jj = z_ - 1; jj<= z_+1; jj++){
+                                    entities[ii][jj][y_] = Entity.NotPlaceable; 
+                                }
+                            }
+                        }
+                        else if(map[x_+1][z_][y_] == Block.Road){
+                            VillageHouses[k].Way = [1,0];
+                            for (let ii = x_-2; ii<= x_; ii++){
+                                for (let jj = z_ - 1; jj<= z_+1; jj++){
+                                    entities[ii][jj][y_] = Entity.NotPlaceable; 
+                                }
+                            }
+                        }
+                        else if(map[x_][z_-1][y_] == Block.Road){
+                            VillageHouses[k].Way = [0,-1]; 
+                            for (let ii = x_-1; ii<= x_+1; ii++){
+                                for (let jj = z_; jj<= z_+2; jj++){
+                                    entities[ii][jj][y_] = Entity.NotPlaceable; 
+                                }
+                            }
+                        }
+                        else if(map[x_][z_+1][y_] == Block.Road){
+                            VillageHouses[k].Way = [0,1]; 
+                            for (let ii = x_-1; ii<= x_+1; ii++){
+                                for (let jj = z_-2; jj<= z_; jj++){
+                                    entities[ii][jj][y_] = Entity.NotPlaceable; 
+                                }
                             }
                         }
                         entities[x_][z_][y_] = Entity.House; 
@@ -299,6 +319,12 @@
                     blocksTexture.minFilter = THREE.NearestFilter;
                     blocksTexture.magFilter = THREE.NearestFilter;
                     blocksMaterial = new THREE.MeshLambertMaterial({map: blocksTexture/*, wireframe:true, color: 0xAAAAAAA*/});
+                    
+                    modelsTexture = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/texture.png');
+                    modelsTexture.minFilter = THREE.NearestFilter;
+                    modelsTexture.magFilter = THREE.NearestFilter;
+                    modelsMaterial = new THREE.MeshLambertMaterial({map: blocksTexture/**/});
+                    
                     waterTexture1 = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/water1.png');
                     waterTexture1.wrapS = THREE.RepeatWrapping;
                     waterTexture1.wrapT = THREE.RepeatWrapping;
