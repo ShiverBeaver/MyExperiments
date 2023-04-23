@@ -41,12 +41,14 @@
             let currentLevel; 
             let map;
             let entities;
+            
             let ambientLight, directionalLight, lightTarget;
             let uvOffset = 0.125;
 
             let generateVillage = true;
-            let villageRadius = 10;
-            let housesRange = [4,7];
+            let villageRadius = 8;
+            let housesRange = [4,4];
+            let VillageHouses = [];
 
             let LevelSize = 128;
             let waterLevel = 4; 
@@ -184,45 +186,87 @@
                         }
                     }
                     function checkRadius(array,i,j,y,rad,object_){
-                        let result = true;
-                        for(let r = 0; r<=rad; r++){
-                            if(array[i-r][j][y]==object_&&array[i+r][j][y]==object_&&
-                            array[i][j-r][y]==object_&&array[i][j+r][y]==object_){
-                                
+                        for (let ii = i - rad; ii<= i+rad; ii++){
+                            for (let jj = j - rad; jj<= j+rad; jj++){
+                                    if (array[ii][jj][y]!==object_){
+                                        return false;
+                                    }
+                                }
                             }
-                            else{
-                                result = false;
-                            }
-                        }
-                        return result;
+                        return true;
                     }
                     let housesNum = getRandomInt(housesRange[0],housesRange[1]);
                     for(let k = 0; k<housesNum;){
                         i_ = getRandomInt(villagePointX-villageRadius,villagePointX+villageRadius);
                         j_ = getRandomInt(villagePointZ-villageRadius,villagePointZ+villageRadius);
-                        if(checkRadius(map,i_,j_,y_,2,Block.Grass)&&checkRadius(entities,i_,j_,y_,3,Entity.Empty)){
+                        if(checkRadius(map,i_,j_,y_,2,Block.Grass)&&checkRadius(entities,i_,j_,y_,2,Entity.Empty)){
                             for (let ii = i_ - 2; ii<= i_+2; ii++){
                                 for (let jj = j_ - 2; jj<= j_+2; jj++){
                                     entities[ii][jj][y_] = Entity.NotPlaceable; 
                                 }
                             }
                             entities[i_][j_][y_] = Entity.House;
-
-
                             k++;
-                            
-                            let left_i = i_;
-                            let right_i = i_; 
-                            let up_j = j_;
-                            let down_j=j_
+                            let way = [0,0];
+                            let steps = 0;
                             for(let step = 0; step<villageRadius; step++){
-                                
+                                if(map[i_-step][j_][y_]==Block.Road){
+                                    way[0] = -1;
+                                    break;
+                                }
+                                if(map[i_+step][j_][y_]==Block.Road){
+                                    way[0] = 1;
+                                    break;
+                                }
+                                if(map[i_][j_-step][y_]==Block.Road){
+                                    way[1] = -1;
+                                    break;
+                                }
+                                if(map[i_][j_+step][y_]==Block.Road){
+                                    way[1] = 1;
+                                    break;
+                                }
+                                steps = step;
+                            }
+                            VillageHouses.push({x: i_,z: j_, y: y_});
+                            for (let step = 0; step<steps+2; step++){
+                                map[i_+way[0]*step][j_+way[1]*step][y_] = Block.Road;
+                                let offset_ = Math.round((Math.random() - 0.5)*1.30);
+                                if(!way[0])
+                                    i_ += offset_;
+                                if(!way[1])
+                                    j_ += offset_;
+                                map[i_+way[0]*step][j_+way[1]*step][y_] = Block.Road;
                             }
                         }
+                    }
+                    for(let k = 0; k<VillageHouses.length; k++){
+                        let x_ = VillageHouses[k].x;
+                        let z_ = VillageHouses[k].z;
+                        let y_ = VillageHouses[k].y;
+                        if(map[x_-1][z_][y_] == Block.Road){
+                            VillageHouses[k].Way = [-1,0]; 
+                        }
+                        if(map[x_+1][z_][y_] == Block.Road){
+                            VillageHouses[k].Way = [1,0];
+                        }
+                        if(map[x_][z_-1][y_] == Block.Road){
+                            VillageHouses[k].Way = [0,-1]; 
+                        }
+                        if(map[x_][z_+1][y_] == Block.Road){
+                            VillageHouses[k].Way = [0,1]; 
+                        }
+                        for (let ii = x_ - 2; ii<= x_+2; ii++){
+                            for (let jj = z_ - 2; jj<= z_+2; jj++){
+                                entities[ii][jj][y_] = Entity.Empty; 
+                            }
+                        }
+                        entities[x_][z_][y_] = Entity.House; 
                         
                     }
-
+                    
                 }
+                console.log(VillageHouses);
                 
                 //console.log(map);
                 loadMeshes();
@@ -446,11 +490,11 @@
                                         let house = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0xAA0000}));
                                         scene.add(house);
                                         house.position.x = i;
-                                        house.position.y = z+1.5;
+                                        house.position.y = z+1.3;
                                         house.position.z = j;
                                         break;
                                     case Entity.NotPlaceable:
-                                        let block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0x0000AA}));
+                                        let block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0x0000AA,transparent:true, opacity: 0.3}));
                                         scene.add(block);
                                         block.position.x = i;
                                         block.position.y = z+1;
