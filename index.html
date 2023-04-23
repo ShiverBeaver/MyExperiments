@@ -36,6 +36,8 @@
             let blocksTexture, modelsTexture, waterTexture1, waterTexture2, borderTexture; 
             let blocksMaterial, modelsMaterial, waterMaterial1, waterMaterial2, borderMaterial;
             let waterMesh1, waterMesh2, landscapeMesh;
+            let HouseModels = [];
+
             let clouds = [];
             let waterfallLayers = [];
             let currentLevel; 
@@ -67,7 +69,7 @@
             document.body.appendChild(stats.dom)
             animate();
             async function loadLevel(level){
-                initScene();
+                await initScene();
                 let noise = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/perlin_scale18_detail3.png',1);
                 noise = MapRange(noise,getRandomInt(6,6));
                 let maxOffset =  noise[0].length - LevelSize;
@@ -290,7 +292,7 @@
                 
                 //console.log(map);
                 loadMeshes();
-                function initScene(){
+                async function initScene(){
                     /*Camera*/
                     scene = new THREE.Scene();
                     scene.background = new THREE.Color( 0x338BA8 );
@@ -299,7 +301,7 @@
                     camera.position.y = 20;
                     camera.position.z = 30+40;
 
-                    camera.rotation.x = -Math.PI/4; //camera.rotation.x = -Math.PI/2 + 0.3;
+                    camera.rotation.x = -Math.PI/4-0.15; //camera.rotation.x = -Math.PI/2 + 0.3;
                     /*Rendering*/
                     renderer = new THREE.WebGLRenderer({antialias:true});
                     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -320,10 +322,11 @@
                     blocksTexture.magFilter = THREE.NearestFilter;
                     blocksMaterial = new THREE.MeshLambertMaterial({map: blocksTexture/*, wireframe:true, color: 0xAAAAAAA*/});
                     
-                    modelsTexture = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/texture.png');
+                    modelsTexture = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/texture_models.png');
                     modelsTexture.minFilter = THREE.NearestFilter;
                     modelsTexture.magFilter = THREE.NearestFilter;
-                    modelsMaterial = new THREE.MeshLambertMaterial({map: blocksTexture/**/});
+                    modelsMaterial = new THREE.MeshLambertMaterial({map: modelsTexture/**/});
+                    //modelsMaterial.side = THREE.DoubleSide;
                     
                     waterTexture1 = textureLoader.load('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/textures/water1.png');
                     waterTexture1.wrapS = THREE.RepeatWrapping;
@@ -348,6 +351,15 @@
                     borderTexture.magFilter = THREE.NearestFilter;
                     borderMaterial = new THREE.MeshBasicMaterial({map: borderTexture, transparent: true, opacity: 0.50});
 
+                    /*Models*/
+                    for(let i = 1; i<=3; i++){
+                        let house = await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/House'+i+'.obj', modelsMaterial);
+                        house.scale.x = 0.5;
+                        house.scale.y = 0.5;
+                        house.scale.z = 0.5;
+                        HouseModels.push(house);
+                    }
+
                     /*Lighting*/
                     const color = 0xFFFFFF;
                     const intensity = 0.55;
@@ -364,7 +376,7 @@
                     directionalLight.shadow.camera.near = 0.5; 
                     directionalLight.shadow.camera.far = 128; 
                     //console.log(directionalLight.shadow.camera);
-                    let lightradius = 60; //60
+                    let lightradius = 25; //60
                     directionalLight.shadow.camera.right = lightradius; 
                     directionalLight.shadow.camera.top = lightradius; 
                     directionalLight.shadow.camera.bottom = -lightradius;
@@ -374,8 +386,13 @@
                     scene.add(directionalLight.target);
                     scene.add(directionalLight);
                     directionalLight.position.x += 10;
-                    directionalLight.target.position.x += 10;
+                    directionalLight.target.position.x += 40;
                     directionalLight.target.position.z += 20;
+
+                    directionalLight.position.z += 20;
+                    directionalLight.target.position.z += 20;
+
+
                 }
                 function loadMeshes(){
                     let planegeometry = new THREE.PlaneGeometry(); 
@@ -514,14 +531,14 @@
                                 switch(entities[i][j][z]){
                                     case Entity.House:
                                         let house = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0xAA0000}));
-                                        scene.add(house);
+                                        //scene.add(house);
                                         house.position.x = i;
                                         house.position.y = z+1.3;
                                         house.position.z = j;
                                         break;
                                     case Entity.NotPlaceable:
                                         let block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0x0000AA,transparent:true, opacity: 0.3}));
-                                        scene.add(block);
+                                        //scene.add(block);
                                         block.position.x = i;
                                         block.position.y = z+1;
                                         block.position.z = j;
@@ -529,6 +546,25 @@
                                 }
                             }
                         }
+                    }
+                    for(let k = 0; k<VillageHouses.length;k++){
+                        let HouseMesh = HouseModels[getRandomInt(0,3)].clone();
+                        let x_ = VillageHouses[k].x;
+                        let z_ = VillageHouses[k].z;
+                        let y_ = VillageHouses[k].y+0.5;
+                        HouseMesh.position.x = x_;
+                        HouseMesh.position.z = z_;
+                        HouseMesh.position.y = y_;
+                        console.log(VillageHouses[k].Way);
+                        if(VillageHouses[k].Way[0]==0){
+                            if(VillageHouses[k].Way[1]==-1)HouseMesh.rotation.y = -Math.PI/2;
+                            if(VillageHouses[k].Way[1]==1)HouseMesh.rotation.y = Math.PI/2;
+                        }
+                        else{
+                            if(VillageHouses[k].Way[0]==-1)HouseMesh.rotation.y = 0;
+                            if(VillageHouses[k].Way[0]==1)HouseMesh.rotation.y = Math.PI; 
+                        }
+                        scene.add(HouseMesh);
                     }
                     /*let villagepoint = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0xAA0000}));
                     villagepoint.position.y = HeightMap[villageSpawnPointX][villageSpawnPointZ];
@@ -666,6 +702,30 @@
                     });
                     await promise;
                     return array;
+                }
+
+                async function LoadObjModel(url,Material,castShadow_ = true,receiveShadow_ = true ){
+                    let mesh;
+                    let promise = new Promise(function(resolve, reject) {
+                        objLoader.load(url,
+                        function ( model ) {
+                            mesh=model;
+                            resolve();
+                        },undefined,function () {console.error( 'An error happened.' );});
+                    });
+                    await promise;
+                    if (Material){
+                        mesh.traverse(child => {
+                        if (child.material) 
+                            child.material = Material;
+                        if (child.isMesh){
+                            child.castShadow = castShadow_;
+                            child.receiveShadow = receiveShadow_;
+                        }
+                        });
+                        
+                    }
+                    return mesh;
                 }
             }
 
