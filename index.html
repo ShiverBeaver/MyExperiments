@@ -38,6 +38,8 @@
             let waterMesh1, waterMesh2, landscapeMesh;
             let HouseModels = [];
             let FenceModel;
+            let WaterlilyModel;
+            let UnderwaterGrassModel;
 
             let clouds = [];
             let waterfallLayers = [];
@@ -58,7 +60,7 @@
 
             
             const Block = createEnum(['Air','Grass', 'Dirt','Road']);
-            const Entity = createEnum(['Empty','NotPlaceable', 'House','Waterlily', 'VerticalFence','HorizontalFence']);
+            const Entity = createEnum(['Empty','NotPlaceable', 'House','Waterlily', 'VerticalFence','HorizontalFence','UnderwaterGrass']);
             currentLevel = 0;
             initLoaders();
             
@@ -84,7 +86,7 @@
                     }
                 }
                 let template = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel_colored.png',1);
-                template = MapRange(template,getRandomInt(14,14));
+                template = MapRange(template,getRandomInt(9,9));
                 maxOffset =  template[0].length - LevelSize;
                 OffsetX = getRandomInt(0,maxOffset);
                 OffsetZ = getRandomInt(0,maxOffset);
@@ -166,7 +168,17 @@
                         }
                     }
                 }
-
+                for (let i = 0; i< LevelSize; i++){
+                    for (let j = 0; j< LevelSize; j++){
+                            if(Math.random() < 0.09 && HeightMap[i][j]==waterLevel-1){
+                                entities[i][j][waterLevel] = Entity.UnderwaterGrass;
+                                //alert(1);
+                            }
+                            if(Math.random() < 0.009 && HeightMap[i][j]<waterLevel){
+                                entities[i][j][waterLevel] = Entity.Waterlily;
+                            }
+                    }
+                }
                 if (generateVillage){
                     let y_ = HeightMap[villagePointX][villagePointZ];
                     //map[villagePointX][villagePointZ][y_]=Block.Dirt;
@@ -368,7 +380,10 @@
                     }
                     FenceModel = await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/fence.obj', modelsMaterial);
                     FenceModel.scale.set(0.5,0.5,0.5);
-
+                    UnderwaterGrassModel = await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/underwatergrass.obj', modelsMaterial);
+                    UnderwaterGrassModel.scale.set(0.5,0.5,0.5);
+                    WaterlilyModel =  await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/waterlily.obj', modelsMaterial);
+                    WaterlilyModel.scale.set(0.5,0.5,0.5);
                     /*Lighting*/
                     const color = 0xFFFFFF;
                     const intensity = 0.55;
@@ -535,6 +550,13 @@
                                     pickSideUV(i,j,z,planegeometry);
                                     meshesArray.push(planegeometry);
                                 }
+                                
+                            }
+                        }
+                    }
+                    for (let i = 0; i < LevelSize; i++) {
+                        for (let j = 0; j < LevelSize; j++) {
+                            for (let z = 0; z < 100; z++){
                                 //entities
                                 let block;
                                 switch(entities[i][j][z]){
@@ -564,6 +586,23 @@
                                         block.position.x = i;
                                         block.position.y = z+1;
                                         block.position.z = j;
+                                        break;
+                                    case Entity.UnderwaterGrass:
+                                        block = UnderwaterGrassModel.clone();
+                                        scene.add(block);
+                                        block.position.x = i;
+                                        block.position.y = z + 0.5;
+                                        block.position.z = j;
+                                        //alert(1);
+                                        break;
+                                    case Entity.Waterlily:
+                                        block = WaterlilyModel.clone();
+                                        scene.add(block);
+                                        block.position.x = i;
+                                        block.position.y = z+0.5;
+                                        block.position.z = j;
+                                        block.rotation.y = Math.PI/2 *getRandomInt(0,4);
+                                        //alert(1);
                                         break;
                                 }
                             }
