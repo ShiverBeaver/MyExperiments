@@ -37,6 +37,7 @@
             let blocksMaterial, modelsMaterial, waterMaterial1, waterMaterial2, borderMaterial;
             let waterMesh1, waterMesh2, landscapeMesh;
             let HouseModels = [];
+            let FenceModel;
 
             let clouds = [];
             let waterfallLayers = [];
@@ -57,7 +58,7 @@
 
             
             const Block = createEnum(['Air','Grass', 'Dirt','Road']);
-            const Entity = createEnum(['Empty','NotPlaceable', 'House','Waterlily']);
+            const Entity = createEnum(['Empty','NotPlaceable', 'House','Waterlily', 'VerticalFence','HorizontalFence']);
             currentLevel = 0;
             initLoaders();
             
@@ -283,8 +284,14 @@
                                 }
                             }
                         }
-                        entities[x_][z_][y_] = Entity.House; 
-                        
+                        /*entities[x_][z_][y_] = Entity.House; 
+                        entities[x_+2][z_][y_+1] = Entity.VerticalFence;
+                        entities[x_+2][z_-1][y_+1] = Entity.VerticalFence; 
+                        entities[x_+2][z_+1][y_+1] = Entity.VerticalFence; 
+                         
+                        entities[x_-2][z_][y_+1] = Entity.VerticalFence;
+                        entities[x_-2][z_-1][y_+1] = Entity.VerticalFence; 
+                        entities[x_-2][z_+1][y_+1] = Entity.VerticalFence; */
                     }
                     
                 }
@@ -359,6 +366,8 @@
                         house.scale.z = 0.5;
                         HouseModels.push(house);
                     }
+                    FenceModel = await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/fence.obj', modelsMaterial);
+                    FenceModel.scale.set(0.5,0.5,0.5);
 
                     /*Lighting*/
                     const color = 0xFFFFFF;
@@ -527,7 +536,7 @@
                                     meshesArray.push(planegeometry);
                                 }
                                 //entities
-
+                                let block;
                                 switch(entities[i][j][z]){
                                     case Entity.House:
                                         let house = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0xAA0000}));
@@ -537,8 +546,21 @@
                                         house.position.z = j;
                                         break;
                                     case Entity.NotPlaceable:
-                                        let block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0x0000AA,transparent:true, opacity: 0.3}));
+                                        block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0x0000AA,transparent:true, opacity: 0.3}));
                                         //scene.add(block);
+                                        block.position.x = i;
+                                        block.position.y = z+1;
+                                        block.position.z = j;
+                                        break;
+                                    case Entity.VerticalFence:
+                                        block = FenceModel.clone();
+                                        scene.add(block);
+                                        block.rotation.y = Math.PI/2;
+                                        block.position.x = i;
+                                        block.position.y = z;
+                                        block.position.z = j;
+                                        block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color: 0x0000AA,transparent:true, opacity: 0.3}));
+                                        scene.add(block);
                                         block.position.x = i;
                                         block.position.y = z+1;
                                         block.position.z = j;
