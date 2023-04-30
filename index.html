@@ -62,6 +62,7 @@
             
             let walls = []; //collision
 
+            let HeightMap;
 
 
             const Block = createEnum(['Air','Grass', 'Dirt','Road']);
@@ -105,7 +106,7 @@
 
                 let villagetemplate = await LoadImageToArray('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel_colored.png',0);
                 villagetemplate = MapRange(villagetemplate,100);
-                console.log(villagetemplate);
+                //console.log(villagetemplate);
                 let villageSpawnPoints = 0;
                 let villagelevelTemplate =  [];
                 for (let i = 0; i < LevelSize; i++) {
@@ -131,7 +132,7 @@
                 
 
                 
-                let HeightMap =  [];
+                HeightMap =  [];
                 for (let i = 0; i < LevelSize; i++) {
                     HeightMap[i] = [];
                     for (let j = 0; j < LevelSize; j++) {
@@ -311,7 +312,7 @@
                         entities[x_-2][z_+1][y_+1] = Entity.VerticalFence; */
                     }   
                 }
-                walls =  [];
+                /*walls =  [];
                 for (let i = 0; i < LevelSize; i++) {
                     walls[i] = [];
                     for (let j = 0; j < LevelSize; j++) {
@@ -320,21 +321,28 @@
                             walls[i][j][z] = false;
                         }
                     }
-                }
+                }*/
 
-
-                console.log(VillageHouses);
-                
+                let Center=LevelSize/2;
+                MainHero.position.set(Center,HeightMap[Center][Center]+1,Center);
+                //console.log(VillageHouses);
+                camera.position.set(MainHero.position.x ,MainHero.position.y + 6,MainHero.position.z +5.5);
                 //console.log(map);
                 loadMeshes();
                 async function initScene(){
                     /*Camera*/
                     scene = new THREE.Scene();
                     scene.background = new THREE.Color( 0x338BA8 );
+                    MainHero = new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.7), new THREE.MeshLambertMaterial({color: 0xAAAA00}))
+                    MainHero.receiveShadow = true;
+                    MainHero.castShadow = true;
+
                     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);//100
                     camera.position.x = 20.6+40;
                     camera.position.y = 20;
                     camera.position.z = 30+40;
+
+
 
                     camera.rotation.x = -Math.PI/4-0.15; //camera.rotation.x = -Math.PI/2 + 0.3;
                     /*Rendering*/
@@ -432,9 +440,10 @@
                     directionalLight.position.z += 20;
                     directionalLight.target.position.z += 20;
 
-
                 }
                 function loadMeshes(){
+
+                    scene.add(MainHero);
                     let planegeometry = new THREE.PlaneGeometry(); 
                     let meshesArray = [];
                     let uvAttribute = planegeometry.getAttribute("uv");
@@ -632,7 +641,7 @@
                         HouseMesh.position.x = x_;
                         HouseMesh.position.z = z_;
                         HouseMesh.position.y = y_;
-                        console.log(VillageHouses[k].Way);
+                        //console.log(VillageHouses[k].Way);
                         if(VillageHouses[k].Way[0]==0){
                             if(VillageHouses[k].Way[1]==-1)HouseMesh.rotation.y = -Math.PI/2;
                             if(VillageHouses[k].Way[1]==1)HouseMesh.rotation.y = Math.PI/2;
@@ -887,42 +896,67 @@
             var ySpeed = 0.6;
             var zSpeed = 0.6;
             document.addEventListener("keydown", onDocumentKeyDown, false);
+            function HeroMove(Direction){
+                let destination = new THREE.Vector3(MainHero.position.x,MainHero.position.y,MainHero.position.z);
+
+                destination.add(Direction);
+                if(destination.x<0||destination.x>LevelSize-1) return;
+                if(destination.z<0||destination.z>LevelSize-1) return;
+
+                destination.y = HeightMap[destination.x][destination.z];
+                Direction.y = destination.y - MainHero.position.y + 1;  
+
+                
+                MainHero.position.add(Direction);
+                camera.position.add(Direction);
+                directionalLight.position.add(Direction);
+                directionalLight.target.position.add(Direction);
+            }
             function onDocumentKeyDown(event) {
                 var key = event.key;
                 console.log(key);
-                console.log(event);
-                if (key == "e") {
+                //console.log(event);
+                if (key == "E") {
                     camera.position.y += ySpeed;
-                } else if (key == "q") {
-                    camera.position.y -= ySpeed;
-                } else if (key == "a") {
-                    camera.position.x -= xSpeed;
-                } else if (key == "d") {
-                    camera.position.x += xSpeed;
-                } else if (key == "w") {
-                    camera.position.z -= zSpeed;
-                } else if (key == "s") {
-                    camera.position.z += zSpeed;
-                }
-                if (key == "e") {
                     directionalLight.position.y += ySpeed;
                     directionalLight.target.position.y += ySpeed;
-                } else if (key == "q") {
+                } else if (key == "Q") {
+                    camera.position.y -= ySpeed;
                     directionalLight.position.y -= ySpeed;
                     directionalLight.target.position.y -= ySpeed;
-                } else if (key == "a") {
+                } else if (key == "A") {
+                    camera.position.x -= xSpeed;
                     directionalLight.position.x -= xSpeed;
                     directionalLight.target.position.x -= xSpeed;
-                } else if (key == "d") {
+                } else if (key == "D") {
+                    camera.position.x += xSpeed;
                     directionalLight.position.x += xSpeed;
                     directionalLight.target.position.x += xSpeed;
-                } else if (key == "w") {
+                } else if (key == "W") {
+                    camera.position.z -= zSpeed;
                     directionalLight.position.z -= zSpeed;
                     directionalLight.target.position.z -= zSpeed;
-                } else if (key == "s") {
+                } else if (key == "S") {
+                    camera.position.z += zSpeed;
                     directionalLight.position.z += zSpeed;
                     directionalLight.target.position.z += zSpeed;
                 }
+                if (key == "e") {
+                    
+                } else if (key == "q") {
+
+                } else if (key == "a") {
+                    HeroMove(new THREE.Vector3(-1, 0, 0));
+                } else if (key == "d") {
+                    HeroMove(new THREE.Vector3(1, 0, 0));
+                } else if (key == "w") {
+                    HeroMove(new THREE.Vector3(0, 0,-1));
+                } else if (key == "s") {
+                    HeroMove(new THREE.Vector3(0,0, 1));
+                } else if (key == " ") {
+
+                }
+                
             };
 
 
