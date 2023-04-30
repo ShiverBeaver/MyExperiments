@@ -36,6 +36,7 @@
             let blocksTexture, modelsTexture, waterTexture1, waterTexture2, borderTexture; 
             let blocksMaterial, modelsMaterial, waterMaterial1, waterMaterial2, borderMaterial;
             let waterMesh1, waterMesh2, landscapeMesh;
+            let MainHero;
             let HouseModels = [];
             let FenceModel;
             let WaterlilyModel;
@@ -54,11 +55,15 @@
             let villageRadius = 8;
             let housesRange = [4,4];
             let VillageHouses = [];
-
+            let cloudsAmount = 700;
             let LevelSize = 128;
             let waterLevel = 4; 
 
             
+            let walls = []; //collision
+
+
+
             const Block = createEnum(['Air','Grass', 'Dirt','Road']);
             const Entity = createEnum(['Empty','NotPlaceable', 'House','Waterlily', 'VerticalFence','HorizontalFence','UnderwaterGrass']);
             currentLevel = 0;
@@ -304,9 +309,20 @@
                         entities[x_-2][z_][y_+1] = Entity.VerticalFence;
                         entities[x_-2][z_-1][y_+1] = Entity.VerticalFence; 
                         entities[x_-2][z_+1][y_+1] = Entity.VerticalFence; */
-                    }
-                    
+                    }   
                 }
+                walls =  [];
+                for (let i = 0; i < LevelSize; i++) {
+                    walls[i] = [];
+                    for (let j = 0; j < LevelSize; j++) {
+                        walls[i][j] = []
+                        for(let z = 0;z < 100; z++){
+                            walls[i][j][z] = false;
+                        }
+                    }
+                }
+
+
                 console.log(VillageHouses);
                 
                 //console.log(map);
@@ -369,7 +385,7 @@
                     borderTexture.minFilter = THREE.NearestFilter;
                     borderTexture.magFilter = THREE.NearestFilter;
                     borderMaterial = new THREE.MeshBasicMaterial({map: borderTexture, transparent: true, opacity: 0.50});
-
+                    //borderMaterial.side = THREE.DoubleSide;
                     /*Models*/
                     for(let i = 1; i<=3; i++){
                         let house = await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/House'+i+'.obj', modelsMaterial);
@@ -727,6 +743,81 @@
                         }
                     }
                     animateWaterFall();
+                    
+
+                    let cloudsGeometries = [];
+                    for(let c = 0; c<cloudsAmount; c++){
+                        let planegeometry = new THREE.PlaneGeometry(); 
+                        let radius = 11;
+                        let offsetx = getRandomFloat(-radius,LevelSize+radius);
+                        let offsetz = getRandomFloat(-radius,LevelSize+radius);
+                        if(Math.random()>0.5){
+                            while(offsetx>-1&&offsetx<LevelSize+1){
+                                offsetx = getRandomFloat(-radius,LevelSize+radius);
+                            }
+                        }
+                        else{
+                            while(offsetz>-1&&offsetz<LevelSize+1){
+                                offsetz = getRandomFloat(-radius,LevelSize+radius);
+                            }
+                        }
+                        let cloudType = getRandomInt(0,6);
+                        let uvAttribute = planegeometry.getAttribute("uv");
+                        let uvArray = uvAttribute.array;
+                        planegeometry.scale(2,2,2);
+                        switch(cloudType){
+                            case 0:
+                            uvArray[0] = 0;            uvArray[1] = 1; //1 
+                            uvArray[2] = 0.375;        uvArray[3] = 1;//2 
+                            uvArray[4] = 0;            uvArray[5] = 0.75;//3 
+                            uvArray[6] = 0.375;        uvArray[7] = 0.75;// 4
+                            planegeometry.scale(1.5,1,1)
+                            break;
+                            case 1:
+                            uvArray[0] = 0;            uvArray[1] = 0.75; //1 
+                            uvArray[2] = 0.375;        uvArray[3] = 0.75;//2 
+                            uvArray[4] = 0;            uvArray[5] = 0.5;//3 
+                            uvArray[6] = 0.375;        uvArray[7] = 0.5;// 4
+                            planegeometry.scale(1.5,1,1)
+                            break;
+                            case 2:
+                            uvArray[0] = 0.375;            uvArray[1] = 1; //1 
+                            uvArray[2] = 0.375+0.25;        uvArray[3] = 1;//2 
+                            uvArray[4] = 0.375;            uvArray[5] = 0.75;//3 
+                            uvArray[6] = 0.375+0.25;        uvArray[7] = 0.75;// 4
+                            break;
+                            case 3:
+                            uvArray[0] = 0.375;         uvArray[1] = 0.75; //1 
+                            uvArray[2] = 0.375+0.25;        uvArray[3] = 0.75;//2 
+                            uvArray[4] = 0.375;           uvArray[5] = 0.5;//3 
+                            uvArray[6] = 0.375+0.25;        uvArray[7] = 0.5;// 4
+                            break;
+                            case 4:
+                            uvArray[0] = 0.625;            uvArray[1] = 1; //1 
+                            uvArray[2] = 1;        uvArray[3] = 1;//2 
+                            uvArray[4] = 0.625;            uvArray[5] = 0.75;//3 
+                            uvArray[6] = 1;        uvArray[7] = 0.75;// 4
+                            planegeometry.scale(1.5,1,1)
+                            break;
+                            case 5:
+                            uvArray[0] = 0.625;            uvArray[1] = 0.75; //1 
+                            uvArray[2] = 1;        uvArray[3] = 0.75;//2 
+                            uvArray[4] = 0.625;            uvArray[5] = 0.5;//3 
+                            uvArray[6] = 1;        uvArray[7] = 0.5;// 4
+                            planegeometry.scale(1.5,1,1)
+                            break;
+                        }
+                        //planegeometry.translate(-5,0,-5);
+                        planegeometry.rotateX(-Math.PI/3.5);
+                        planegeometry.translate(offsetx,(c)/cloudsAmount*10-5,offsetz);
+
+                       // 
+                       // setUVcoordinates(getRandomInt(0,3),3-z,uvArray);
+                        cloudsGeometries.push(planegeometry);
+                    }
+                    clouds[0] = new THREE.Mesh(BufferGeometryUtils.mergeBufferGeometries(cloudsGeometries),borderMaterial);
+                    clouds[0].position.y = 0;;
+                    scene.add(clouds[0]);
                 }
 
                 function MapRange(array,layersNumber,maxNumber = 255){
@@ -847,6 +938,9 @@
                 min = Math.ceil(min);
                 max = Math.floor(max);
                 return Math.floor(Math.random() * (max - min) + min); 
+            }
+            function getRandomFloat(min, max) {
+                return Math.random() * (max - min) + min;
             }
             function createEnum(values) {
                 const enumObject = {};
