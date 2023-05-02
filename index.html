@@ -333,9 +333,7 @@
                     /*Camera*/
                     scene = new THREE.Scene();
                     scene.background = new THREE.Color( 0x338BA8 );
-                    MainHero = new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.7), new THREE.MeshLambertMaterial({color: 0xAAAA00}))
-                    MainHero.receiveShadow = true;
-                    MainHero.castShadow = true;
+                    
 
                     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);//100
                     camera.position.x = 20.6+40;
@@ -408,6 +406,12 @@
                     UnderwaterGrassModel.scale.set(0.5,0.5,0.5);
                     WaterlilyModel =  await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/waterlily.obj', modelsMaterial);
                     WaterlilyModel.scale.set(0.5,0.5,0.5);
+
+                    MainHero = await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/fence.obj', modelsMaterial);
+                    MainHero.receiveShadow = true;
+                    MainHero.castShadow = true;
+
+
                     /*Lighting*/
                     const color = 0xFFFFFF;
                     const intensity = 0.55;
