@@ -407,7 +407,8 @@
                     WaterlilyModel =  await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/waterlily.obj', modelsMaterial);
                     WaterlilyModel.scale.set(0.5,0.5,0.5);
 
-                    MainHero = await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/fence.obj', modelsMaterial);
+                    MainHero = await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/beaver.obj', modelsMaterial);
+                    MainHero.scale.set(0.5,0.5,0.5);
                     MainHero.receiveShadow = true;
                     MainHero.castShadow = true;
 
@@ -901,6 +902,12 @@
             var zSpeed = 0.6;
             document.addEventListener("keydown", onDocumentKeyDown, false);
             function HeroMove(Direction){
+                if (Direction.x == 1) MainHero.rotation.y = (Math.PI/2)*0;
+                if (Direction.x == -1)MainHero.rotation.y = (Math.PI/2)*2;
+                if (Direction.z == 1)MainHero.rotation.y = (Math.PI/2)*3;
+                if (Direction.z == -1)MainHero.rotation.y = (Math.PI/2)*1;
+
+
                 let destination = new THREE.Vector3(MainHero.position.x,MainHero.position.y,MainHero.position.z);
 
                 destination.add(Direction);
