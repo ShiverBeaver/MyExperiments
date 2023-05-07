@@ -387,6 +387,10 @@
             let FenceModel;
             let WaterlilyModel;
             let UnderwaterGrassModel;
+            let TreeModel;
+            let PineTreeModel;
+            let LogModel;
+            let BridgeModel;
             let isWaterAnimated = false;
 
             let clouds = [];
@@ -403,6 +407,7 @@
             let housesRange = [4,4];
             let LevelSize = 128;
             let cloudsAmount = LevelSize*7;
+            let TreeDensity = 0.01;
             let currentLevelURL = 'https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel_colored.png';
             let HeightNoiseRange = [6,6];
             let HeightTemplateRange = [8,8];
@@ -413,7 +418,7 @@
 
             let HeightMap;
             const Block = createEnum(['Air','Grass', 'Dirt','Road']);
-            const Entity = createEnum(['Empty','NotPlaceable', 'House','Waterlily', 'VerticalFence','HorizontalFence','UnderwaterGrass']);
+            const Entity = createEnum(['Empty','NotPlaceable', 'House','Waterlily', 'VerticalFence','HorizontalFence','UnderwaterGrass','Tree','PineTree','Log','Bridge']);
             currentLevel = '0';
             initLoaders();
 
@@ -626,6 +631,13 @@
                             if(Math.random() < 0.009 && HeightMap[i][j]<waterLevel){
                                 entities[i][j][waterLevel] = Entity.Waterlily;
                             }
+                            if(Math.random() < TreeDensity && HeightMap[i][j]>=waterLevel){
+                                if (villagelevelTemplate[i][j] <40){
+                                    entities[i][j][HeightMap[i][j]] = Math.random()>0.5?Entity.Tree:Entity.PineTree;
+                                }
+                            }
+
+
                     }
                 }
                 if (generateVillage){
@@ -855,7 +867,10 @@
                     UnderwaterGrassModel.scale.set(0.5,0.5,0.5);
                     WaterlilyModel =  await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/waterlily.obj', modelsMaterial);
                     WaterlilyModel.scale.set(0.5,0.5,0.5);
-
+                    TreeModel =  await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/tree1.obj', modelsMaterial);
+                    PineTreeModel =  await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/tree2.obj', modelsMaterial);
+                    LogModel =  await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/log.obj', modelsMaterial);
+                    BridgeModel =  await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/bridge.obj', modelsMaterial);
                     MainHero = await LoadObjModel('https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/models/beaver.obj', modelsMaterial);
                     MainHero.scale.set(0.5,0.5,0.5);
                     MainHero.receiveShadow = true;
@@ -1072,7 +1087,6 @@
                                         block.position.x = i;
                                         block.position.y = z + 0.5;
                                         block.position.z = j;
-                                        //alert(1);
                                         break;
                                     case Entity.Waterlily:
                                         block = WaterlilyModel.clone();
@@ -1081,7 +1095,26 @@
                                         block.position.y = z+0.5;
                                         block.position.z = j;
                                         block.rotation.y = Math.PI/2 *getRandomInt(0,4);
-                                        //alert(1);
+                                        break;
+                                    case Entity.Tree:
+                                        block = TreeModel.clone();
+                                        scene.add(block);
+                                        block.position.x = i;
+                                        block.position.y = z+1;
+                                        block.position.z = j;
+                                        block.scale.set(1.4,1.4,1.4);
+                                        block.rotation.y = Math.PI/2 *getRandomInt(0,4);
+                                        //alert(z);
+                                        break;
+                                    case Entity.PineTree:
+                                        block = PineTreeModel.clone();
+                                        scene.add(block);
+                                        block.position.x = i;
+                                        block.position.y = z+1;
+                                        block.position.z = j;
+                                        block.scale.set(1.4,1.4,1.4);
+                                        block.rotation.y = Math.PI/2 *getRandomInt(0,4);
+                                        //alert(z);
                                         break;
                                 }
                             }
