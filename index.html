@@ -580,7 +580,7 @@
                         currentLevelURL = 'https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/level6.png';
                         HeightNoiseRange = [3,3];
                         HeightTemplateRange = [5,5];
-                        waterLevel = 3; 
+                        waterLevel = 4; 
                         TreeDensity = 0.03;
                         break;
                     default: 
@@ -1036,7 +1036,7 @@
                                     switch (map[i][j][z]){
                                         case Block.Grass:
                                             offset = Math.random()>0.5?0:getRandomInt(1,4);
-                                            setUVcoordinates(4+(z<4?0:offset),6,uvArray);
+                                            setUVcoordinates(4+(z<waterLevel?0:offset),6,uvArray);
                                             break;
                                         case Block.Road:
                                             if(map[i][j+1][z]==Block.Road&&map[i][j-1][z]==Block.Road && map[i+1][j][z]==Block.Road&&map[i-1][j][z]==Block.Road) 
