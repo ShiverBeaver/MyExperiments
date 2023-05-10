@@ -210,12 +210,13 @@
             .lefthandimage{
                 transition: 0.15s;
                 position: absolute;
-                left: 20px;
-                top: 4px;
+                left: 4px;
+                top: 0px;
+                
                 image-rendering: pixelated;
-                width: 36px;
-                height: 56px;
-                background: center / contain no-repeat url("interface/sound1.png");
+                width: 64px;
+                height: 64px;
+                background: center / contain no-repeat url("interface/log_icon.png");
             }
             .lefthandimage:active,.righthandimage:active{
                 transform: scaleX(1.1) scaleY(1.1);
@@ -254,13 +255,19 @@
                 top: 3%;
                 left: 60%;
                 display: block;
-                color: burlywood;
-                width: 500px;
-                height: 64px;
+                color: rgb(255, 212, 157);
+                width: 540px;
+                height: 90px;
                 border: none;
                 font-weight: bold;
-                font-size: 32px;
+                font-size: 36px;
                 font-family: 'VT323', monospace;
+                background-color: #ffffff3a;
+                border-radius: 15px;
+            }
+            .statsinfo{
+                color:rgb(255, 53, 18);
+                font-size: 40px;
             }
           </style>  
         </style>
@@ -354,13 +361,13 @@
         
             <div class="ingameUI">
                 <div class="lefthandbutton">
-                    <input type="button" class="smallbutton" value=""> 
+                    <input type="button" class="smallbutton"  value=""> 
                     <div class="lefthandimage"></div>
                 </div>
-                <div class="righthandbutton">
+              <!--  <div class="righthandbutton">
                     <input type="button" class="smallbutton" value=""> 
                     <div class="righthandimage"></div>
-                </div>
+                </div>-->
                 <input type="button" class="pausebutton" value=""> 
                 <div class="objective">Neque porro: quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit...</div>
             </div>
@@ -407,7 +414,7 @@
             let housesRange = [4,4];
             let LevelSize = 128;
             let cloudsAmount = LevelSize*7;
-            let TreeDensity = 0.01;
+            let TreeDensity = 0.02;
             let currentLevelURL = 'https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/testlevel_colored.png';
             let HeightNoiseRange = [6,6];
             let HeightTemplateRange = [8,8];
@@ -415,6 +422,9 @@
             let cameraoffset = new THREE.Vector3(0,5,4.5);
             let VillageHouses = [];
             let walls = []; //collision
+            let ModelsIngame =[];
+            let TreesLeft = 0;
+            let LogsInInv = 0;
 
             let HeightMap;
             const Block = createEnum(['Air','Grass', 'Dirt','Road']);
@@ -426,6 +436,7 @@
             let MenuUI = document.querySelector(".MenuUI");
             let levelsUI = document.querySelector(".levelsUI");
             let ingameUI = document.querySelector(".ingameUI");
+            let GameInfo = ingameUI.querySelector(".objective");
             function FromMenuToLevelsList(){
                 MenuUI.remove()
                 UI.appendChild(levelsUI);
@@ -448,6 +459,16 @@
                 LevelManager('0');
                 currentLevel = '0';
             }
+            function TryToBuild(){
+                if(LogsInInv>=3){
+                        nextIsBridge = true;
+                        LogsInInv -= 3 ;
+                        UpdateGameInfo();
+                }
+            }
+            let handimage = ingameUI.querySelector(".lefthandimage");
+            console.log(handimage);
+            handimage.addEventListener("click",TryToBuild);
             //.addEventListener("click",FromLevelstoLevel)
 
             for(let i of levelsUI.querySelectorAll(".levels")){
@@ -478,10 +499,12 @@
                 } catch (error) {
                 console.error(error);
                 }
-
+                
                 clouds = [];
                 waterfallLayers = [];
                 VillageHouses = [];
+                TreesLeft = 0;
+                LogsInInv = 0;
                 switch(level){
                     case '0':
                         generateVillage = false;;
@@ -492,18 +515,52 @@
                         HeightNoiseRange = [4,6];
                         HeightTemplateRange = [3,3];
                         waterLevel = 4; 
+                        TreeDensity = 0.02;
                         break;
                     case '1':
                         generateVillage = false;;
                         villageRadius = 8;
                         housesRange = [4,4];
-                        LevelSize = 38;
+                        LevelSize = 30;
                         currentLevelURL = 'https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/empty.png';
                         HeightNoiseRange = [8,8];
                         HeightTemplateRange = [1,1];
                         waterLevel = 4; 
-                        break
+                        TreeDensity = 0.03;
+                    case '2':
+                        generateVillage = false;;
+                        villageRadius = 8;
+                        housesRange = [4,4];
+                        LevelSize = 34;
+                        currentLevelURL = 'https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/empty.png';
+                        HeightNoiseRange = [11,11];
+                        HeightTemplateRange = [1,1];
+                        waterLevel = 4; 
+                        TreeDensity = 0.03;
+                        break;
 
+                    case '3':
+                        generateVillage = false;;
+                        villageRadius = 8;
+                        housesRange = [4,4];
+                        LevelSize = 30;
+                        currentLevelURL = 'https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/empty.png';
+                        HeightNoiseRange = [11,11];
+                        HeightTemplateRange = [1,1];
+                        waterLevel = 7; 
+                        TreeDensity = 0.05;
+                        break;
+                    case '4':
+                        generateVillage = false;;
+                        villageRadius = 8;
+                        housesRange = [4,4];
+                        LevelSize = 32;
+                        currentLevelURL = 'https://raw.githubusercontent.com/ShiverBeaver/MyExperiments/main/generation/leveltemplates/empty.png';
+                        HeightNoiseRange = [21,21];
+                        HeightTemplateRange = [1,1];
+                        waterLevel = 8; 
+                        TreeDensity = 0.05;
+                        break;
                     default: 
                         generateVillage = true;;
                         villageRadius = 8;
@@ -514,6 +571,13 @@
                         HeightTemplateRange = [8,8];
                         waterLevel = 4; 
                         break;
+                }
+                ModelsIngame =  [];
+                for (let i = 0; i < LevelSize; i++) {
+                    ModelsIngame[i] = [];
+                    for (let j = 0; j < LevelSize; j++) {
+                        ModelsIngame[i][j] = [];
+                    }
                 }
                 cloudsAmount = LevelSize*5;
                 await loadLevel(level);
@@ -526,6 +590,7 @@
                     ingameUI.remove();
                     UI.appendChild(MenuUI);
                 }
+                UpdateGameInfo();
             }
             async function loadLevel(level){
                 await initScene();
@@ -556,7 +621,6 @@
 
                 let villagetemplate = await LoadImageToArray(currentLevelURL,0);
                 villagetemplate = MapRange(villagetemplate,100);
-                //console.log(villagetemplate);
                 let villageSpawnPoints = 0;
                 let villagelevelTemplate =  [];
                 for (let i = 0; i < LevelSize; i++) {
@@ -571,8 +635,8 @@
                 let villagePointX = 0, villagePointZ = 0;
                 for (let i = 0; i < LevelSize; i++) {
                     for (let j = 0; j < LevelSize; j++) {
-                        if(villagelevelTemplate[i][j]>98) currentPoint++;
-
+                        if(villagelevelTemplate[i][j]>98) 
+                            currentPoint++;
                         if(currentPoint == spawnPoint){
                             villagePointX = i;
                             villagePointZ = j;
@@ -632,12 +696,11 @@
                                 entities[i][j][waterLevel] = Entity.Waterlily;
                             }
                             if(Math.random() < TreeDensity && HeightMap[i][j]>=waterLevel){
-                                if (villagelevelTemplate[i][j] <40){
+                                if (villagelevelTemplate[i][j]<40){
                                     entities[i][j][HeightMap[i][j]] = Math.random()>0.5?Entity.Tree:Entity.PineTree;
+                                    TreesLeft++;
                                 }
                             }
-
-
                     }
                 }
                 if (generateVillage){
@@ -780,13 +843,11 @@
 
                 let Center=LevelSize/2;
                 MainHero.position.set(Center,HeightMap[Center][Center]+1,Center);
-                //console.log(VillageHouses);
                 camera.position.set(MainHero.position.x ,MainHero.position.y,MainHero.position.z);
                 camera.position.add(cameraoffset);
-                directionalLight.position.set(camera.position.x + 10,camera.position.y + 10,camera.position.z - 20);
-                directionalLight.target.position.set(directionalLight.position.x-40,directionalLight.position.y-20,directionalLight.position.z+20);
+                directionalLight.position.set(camera.position.x + 20,camera.position.y + 10,camera.position.z - 20);
+                directionalLight.target.position.set(directionalLight.position.x-30,directionalLight.position.y-20,directionalLight.position.z+20);
 
-                //console.log(map);
                 loadMeshes();
                  Center=LevelSize/2;
                 
@@ -892,7 +953,6 @@
                     directionalLight.shadow.mapSize.height = 1024*1; 
                     directionalLight.shadow.camera.near = 0.5; 
                     directionalLight.shadow.camera.far = 128; 
-                    //console.log(directionalLight.shadow.camera);
                     let lightradius = 25; //60
                     directionalLight.shadow.camera.right = lightradius; 
                     directionalLight.shadow.camera.top = lightradius; 
@@ -1102,9 +1162,10 @@
                                         block.position.x = i;
                                         block.position.y = z+1;
                                         block.position.z = j;
-                                        block.scale.set(1.4,1.4,1.4);
+                                        block.scale.set(1.6,1.6,1.6);
                                         block.rotation.y = Math.PI/2 *getRandomInt(0,4);
-                                        //alert(z);
+                                        ModelsIngame[i][j][z]=block;
+
                                         break;
                                     case Entity.PineTree:
                                         block = PineTreeModel.clone();
@@ -1112,9 +1173,9 @@
                                         block.position.x = i;
                                         block.position.y = z+1;
                                         block.position.z = j;
-                                        block.scale.set(1.4,1.4,1.4);
+                                        block.scale.set(1.6,1.6,1.6);
                                         block.rotation.y = Math.PI/2 *getRandomInt(0,4);
-                                        //alert(z);
+                                        ModelsIngame[i][j][z]=block;
                                         break;
                                 }
                             }
@@ -1128,7 +1189,6 @@
                         HouseMesh.position.x = x_;
                         HouseMesh.position.z = z_;
                         HouseMesh.position.y = y_;
-                        //console.log(VillageHouses[k].Way);
                         if(VillageHouses[k].Way[0]==0){
                             if(VillageHouses[k].Way[1]==-1)HouseMesh.rotation.y = -Math.PI/2;
                             if(VillageHouses[k].Way[1]==1)HouseMesh.rotation.y = Math.PI/2;
@@ -1372,12 +1432,10 @@
                             child.receiveShadow = receiveShadow_;
                         }
                         });
-                        
                     }
                     return mesh;
                 }
             }
-
 
             var plane;
             var xSpeed = 0.6;
@@ -1387,6 +1445,7 @@
 
             let isMoving = false;
             let isSwimming = false;
+            let nextIsBridge = false;
             async function HeroMove(Direction){
 
                 if(isMoving)return;
@@ -1398,22 +1457,20 @@
                 if (Direction.z == -1)MainHero.rotation.y = (Math.PI/2)*1;
 
                 let destination = new THREE.Vector3(MainHero.position.x,MainHero.position.y,MainHero.position.z);
-
                 destination.add(Direction);
                 if(destination.x<0||destination.x>LevelSize-1)
                 {
                     isMoving = false;
                     return;
                 }
-
                 if(destination.z<0||destination.z>LevelSize-1) 
                 {
                     isMoving = false;
                     return;
                 }
                 destination.y = HeightMap[destination.x][destination.z]+1;
-                console.log(waterLevel);
-                console.log(destination.y);
+
+
                 if(destination.y<=waterLevel)
                 {
                     destination.y = waterLevel;
@@ -1428,9 +1485,71 @@
                     isMoving = false;
                     return;
                 }
+                let targetEntity = entities[destination.x][destination.z][destination.y-1];
+                if(targetEntity==Entity.NotPlaceable){
+                    isMoving = false;
+                    return;
+                }
+                if(targetEntity==Entity.Tree || targetEntity==Entity.PineTree){
+                    let targetModel = ModelsIngame[destination.x][destination.z][destination.y-1];
+                    let t = 0;
+                    while(t<10){
+                        let value = Math.sin(0.5*(t*t)+9)*Math.sqrt((t*-1)+10); // Math.sin(​0.5*(​t*t)+​9)//*Math.​sqrt(​(t*-1)+​10);
+                        targetModel.position.x = destination.x + value*0.04;
+                        t += 0.15;
+                        await delay(1);
+                    }
+                    if(Math.random()<0.65){
+                        entities[destination.x][destination.z][destination.y-1] = Entity.Empty;
+                        scene.remove(targetModel);
+                        
+                        let block = LogModel.clone();
+                        scene.add(block);
+                        block.position.x = destination.x;
+                        block.position.y = destination.y-0.35;
+                        block.position.z = destination.z;
+                        //block.scale.set(1.6,1.6,1.6);
+                        block.rotation.y = Math.PI/2 *getRandomInt(0,4);
+                        ModelsIngame[destination.x][destination.z][destination.y-1]=block;
+                        entities[destination.x][destination.z][destination.y-1]=Entity.Log;
+                        TreesLeft -=1 ;
+                        console.log("trees: " + TreesLeft);
+                        UpdateGameInfo();
+                    }
+                    isMoving = false;
+                    return;
+                }
+                if(targetEntity==Entity.Log){
+                    setTimeout(()=>{
+                        scene.remove(ModelsIngame[destination.x][destination.z][destination.y-1]);
+                        ModelsIngame[destination.x][destination.z][destination.y-1]=undefined;
+                        entities[destination.x][destination.z][destination.y-1]=Entity.Empty;
+                        LogsInInv+=1;
+                        UpdateGameInfo();
+                        console.log("logs: " + LogsInInv);
+                    },250)
+                }
+
+                if(nextIsBridge&&targetEntity==Entity.Empty){
+
+                    let block = BridgeModel.clone();
+                        scene.add(block);
+                        block.position.x = destination.x;
+                        block.position.y = destination.y;
+                        block.position.z = destination.z;
+                        //block.scale.set(1.6,1.6,1.6);
+                        block.rotation.y = Math.PI/2 *getRandomInt(0,4);
+                        ModelsIngame[destination.x][destination.z][destination.y-1]=block;
+                        entities[destination.x][destination.z][destination.y-1]=Entity.Bridge;
+                        nextIsBridge = false;
+                        UpdateGameInfo();
+                        HeightMap[destination.x][destination.z] = destination.y;
+                    isMoving = false;
+                    return;
+                }
+
                 let A = {x: MainHero.position.x, y: MainHero.position.y, z: MainHero.position.z} ;
                 let B = {x: destination.x, y: destination.y, z: destination.z};
-
                 
                 let t = 0;
                 let y_off = 0;
@@ -1450,7 +1569,6 @@
                     int_z = lerp(A.z,B.z,t_);
                     camera.position.set(int_x,int_y,int_z);
                     camera.position.add(cameraoffset);
-
                     await delay(1);
                 }
 
@@ -1458,18 +1576,39 @@
                 camera.position.set(MainHero.position.x,MainHero.position.y,MainHero.position.z);
                 camera.position.add(cameraoffset);
 
-                directionalLight.position.set(camera.position.x + 10,camera.position.y + 10,camera.position.z - 20);
-                directionalLight.target.position.set(directionalLight.position.x-40,directionalLight.position.y-20,directionalLight.position.z+20);
+                directionalLight.position.set(camera.position.x + 20,camera.position.y + 10,camera.position.z - 20);
+                directionalLight.target.position.set(directionalLight.position.x-30,directionalLight.position.y-20,directionalLight.position.z+20);
                 isMoving = false;
 
             }
             function lerp(a,b,t){
                 return a * (1 - t) + b * t;
             }
+            
+            function UpdateGameInfo(){
+                if(LogsInInv>=3){
+                    handimage.style.background = `center / contain no-repeat url("interface/log_icon.png");`;
+                }
+                else{
+                    handimage.style.background = ``;
+                }
+                GameInfo.innerHTML = `You need to chop down <span class="statsinfo">${TreesLeft}</span> more trees! <br> 
+                You have <span class="statsinfo"> ${LogsInInv} </span>logs in inventory.`;
+                if(TreesLeft<=0){
+                    setTimeout(()=>
+                    {GameInfo.innerHTML = `You`},1000)
+                    setTimeout(()=>
+                    {GameInfo.innerHTML = `You win!`},1500)
+                    setTimeout(()=>
+                    {GameInfo.innerHTML = `You win!!`},2600)
+                    setTimeout(()=>
+                    {GameInfo.innerHTML = `You win!!!`},3000)
+                    setTimeout(()=>
+                    {LevelManager('0')},4300)
+                }
+            }
             function onDocumentKeyDown(event) {
                 var key = event.key;
-                //console.log(key);
-                //console.log(event);
                 if (key == "E") {
                     camera.position.y += ySpeed;
                     directionalLight.position.y += ySpeed;
@@ -1496,7 +1635,7 @@
                     directionalLight.target.position.z += zSpeed;
                 }
                 if (key == "e") {
-                    
+                    TryToBuild();
                 } else if (key == "q") {
 
                 } else if (key == "a") {
